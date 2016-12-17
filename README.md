@@ -1,3 +1,7 @@
+# MOOC Dropout
+This repo holds code analyzing MOOC dropout data from EdX
+using both RNN LSTM and an ensemble of other machine learning models.
+
 ## Ensemble code
 Before running feature creation, write a deadline file with `deadlines.py`.
 Feature creation is found in `ensemble_features.py`.
