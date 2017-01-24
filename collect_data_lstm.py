@@ -3,12 +3,8 @@ import json
 from datetime import datetime, timedelta
 import re
 import pandas as pd
+import numpy as np
 import pickle
-from keras.preprocessing import sequence
-from keras.utils import np_utils
-from keras.models import Sequential
-from keras.layers import Dense, Dropout, Activation, Embedding
-from keras.layers import LSTM, SimpleRNN, GRU
 
 
 def generate_ordered_event_copy(event_log_file_name):
@@ -19,7 +15,7 @@ def generate_ordered_event_copy(event_log_file_name):
     Example: generate_ordered_event_copy("../data/DelftX_AE1110x_1T2014.log")
     """
     output_name = "ORDERED_" + event_log_file_name.split('/')[-1]
-
+    print(datetime.now())
     all_data_paired_with_time = []
     with open(event_log_file_name) as data_file:
         for line in data_file.readlines():
@@ -41,96 +37,117 @@ def generate_ordered_event_copy(event_log_file_name):
     with open(output_name, mode='w') as f:
         for line in to_output:
             f.write(line)
+    print(datetime.now())
     return output_name
+
+
+def collect_event_frequency(list_of_course_log_files):
+    """gets frequency of event types in log files"""
+    event_type_count = defaultdict(int)
+    for log_file in list_of_course_log_files:
+        print(log_file)
+        with open(log_file) as f:
+            for line in f:
+                try:
+                    data = json.loads(line)
+                    parsed_event = parse_event(data)
+                    event_type_count[parsed_event] += 1
+                except ValueError:
+                    print(line)
+        with open('progress_event_type_count.pickle', 'wb') as f:
+            pickle.dump(event_type_count, f)
+    return event_type_count
 
 
 def parse_event(data):
     """data is a dict, returns a string"""
     event_type = data['event_type']
     # BerkeleyX/Stat_2\.1x/1t2014
-    if re.match(r"/courses/[^/]+/[^/]+/[^/]+/courseware/", event_type):
+    if re.match(r"/courses/.+/courseware/", event_type):
         parsed_event = 'courseware_load'
-    elif re.match(r"/courses/[^/]+/[^/]+/[^/]+/jump_to_id/[^/]+/?$", event_type):
+    elif re.match(r"/courses/.+/jump_to_id/[^/]+/?$", event_type):
         parsed_event = "jump_to_id"
-    elif re.match(r"/courses/[^/]+/[^/]+/[^/]+/$", event_type):
+    elif re.match(r"/courses/.+/$", event_type):
         parsed_event = 'homepage'
-    elif re.match(r"/courses/[^/]+/[^/]+/[^/]+/discussion/users$", event_type):
+    elif re.match(r"/courses/.+/discussion/users$", event_type):
         parsed_event = 'view users'
-    elif re.match(r"/courses/[^/]+/[^/]+/[^/]+/about$", event_type):
+    elif re.match(r"/courses/.+/about$", event_type):
         parsed_event = 'about page'
-    elif re.match(r"/courses/[^/]+/[^/]+/[^/]+/course_wiki$", event_type):
+    elif re.match(r"/courses/.+/course_wiki$", event_type):
         parsed_event = 'wiki homepage'
-    elif re.match(r"/courses/[^/]+/[^/]+/[^/]+/discussion/forum/?$", event_type):
+    elif re.match(r"/courses/.+/discussion/forum/?$", event_type):
         parsed_event = "forum homepage"
-    elif re.match(r"/courses/[^/]+/[^/]+/[^/]+/info/$", event_type):
+    elif re.match(r"/courses/.+/info/$", event_type):
         parsed_event = "course info"
-    elif re.match(r"/courses/[^/]+/[^/]+/[^/]+/discussion/[^/]+/threads/create$", event_type):
+    elif re.match(r"/courses/.+/discussion/[^/]+/threads/create$", event_type):
         parsed_event = 'create discussion'
-    elif re.match(r"/courses/[^/]+/[^/]+/[^/]+/discussion/comments/[^/]+/reply$", event_type):
+    elif re.match(r"/courses/.+/discussion/comments/[^/]+/reply$", event_type):
         parsed_event = 'reply discussion comment'
-    elif re.match(r"/courses/[^/]+/[^/]+/[^/]+/discussion/comments/[^/]+/flagAbuse$", event_type):
+    elif re.match(r"/courses/.+/discussion/comments/[^/]+/flagAbuse$", event_type):
         parsed_event = 'flag abuse discussion comment'
-    elif re.match(r"/courses/[^/]+/[^/]+/[^/]+/discussion/comments/[^/]+/unFlagAbuse$", event_type):
+    elif re.match(r"/courses/.+/discussion/comments/[^/]+/unFlagAbuse$", event_type):
         parsed_event = 'unflag abuse discussion comment'
-    elif re.match(r"/courses/[^/]+/[^/]+/[^/]+/discussion/comments/[^/]+/delete$", event_type):
+    elif re.match(r"/courses/.+/discussion/comments/[^/]+/delete$", event_type):
         parsed_event = 'delete discussion comment'
-    elif re.match(r"/courses/[^/]+/[^/]+/[^/]+/discussion/comments/[^/]+/upvote$", event_type):
+    elif re.match(r"/courses/.+/discussion/comments/[^/]+/upvote$", event_type):
         parsed_event = 'upvote discussion comment'
-    elif re.match(r"/courses/[^/]+/[^/]+/[^/]+/discussion/comments/[^/]+/update$", event_type):
+    elif re.match(r"/courses/.+/discussion/comments/[^/]+/update$", event_type):
         parsed_event = 'update discussion comment'
-    elif re.match(r"/courses/[^/]+/[^/]+/[^/]+/discussion/comments/[^/]+/unvote$", event_type):
+    elif re.match(r"/courses/.+/discussion/comments/[^/]+/unvote$", event_type):
         parsed_event = 'unvote discussion comment'
-    elif re.match(r"/courses/[^/]+/[^/]+/[^/]+/discussion/comments/[^/]+/endorse$", event_type):
+    elif re.match(r"/courses/.+/discussion/comments/[^/]+/endorse$", event_type):
         parsed_event = 'endorse discussion comment'
-    elif re.match(r"/courses/[^/]+/[^/]+/[^/]+/discussion/comments/[^/]+$", event_type):
+    elif re.match(r"/courses/.+/discussion/comments/[^/]+$", event_type):
         parsed_event = 'load discussion comment'
-    elif re.match(r"/courses/[^/]+/[^/]+/[^/]+/discussion/forum/[^/]+/inline$", event_type):
+    elif re.match(r"/courses/.+/discussion/forum/[^/]+/inline$", event_type):
         parsed_event = 'inline discussion'
-    elif re.match(r"/courses/[^/]+/[^/]+/[^/]+/discussion/forum/[^/]+/threads/[^/]+", event_type):
+    elif re.match(r"/courses/.+/discussion/forum/[^/]+/threads/[^/]+", event_type):
         parsed_event = 'thread discussion'
-    elif re.match(r"/courses/[^/]+/[^/]+/[^/]+/discussion/[^/]+/threads/create$", event_type):
+    elif re.match(r"/courses/.+/discussion/[^/]+/threads/create$", event_type):
         parsed_event = 'create thread discussion'
-    elif re.match(r"/courses/[^/]+/[^/]+/[^/]+/discussion/threads/[^/]+/threads/follow$", event_type):
+    elif re.match(r"/courses/.+/discussion/threads/[^/]+/threads/follow$", event_type):
         parsed_event = 'follow thread2 discussion'
-    elif re.match(r"/courses/[^/]+/[^/]+/[^/]+/discussion/threads/[^/]+/threads/unfollow$", event_type):
+    elif re.match(r"/courses/.+/discussion/threads/[^/]+/threads/unfollow$", event_type):
         parsed_event = 'unfollow thread2 discussion'
-    elif re.match(r"/courses/[^/]+/[^/]+/[^/]+/discussion/threads/[^/]+/threads/reply$", event_type):
+    elif re.match(r"/courses/.+/discussion/threads/[^/]+/threads/reply$", event_type):
         parsed_event = 'reply thread2 discussion'
-    elif re.match(r"/courses/[^/]+/[^/]+/[^/]+/discussion/threads/[^/]+/threads/upvote$", event_type):
+    elif re.match(r"/courses/.+/discussion/threads/[^/]+/threads/upvote$", event_type):
         parsed_event = 'upvote thread2 discussion'
-    elif re.match(r"/courses/[^/]+/[^/]+/[^/]+/discussion/threads/[^/]+/threads/unvote$", event_type):
+    elif re.match(r"/courses/.+/discussion/threads/[^/]+/threads/unvote$", event_type):
         parsed_event = 'unvote thread2 discussion'
-    elif re.match(r"/courses/[^/]+/[^/]+/[^/]+/discussion/threads/[^/]+/threads/delete$", event_type):
+    elif re.match(r"/courses/.+/discussion/threads/[^/]+/threads/delete$", event_type):
         parsed_event = 'delete thread2 discussion'
-    elif re.match(r"/courses/[^/]+/[^/]+/[^/]+/discussion/threads/[^/]+/follow$", event_type):
+    elif re.match(r"/courses/.+/discussion/threads/[^/]+/follow$", event_type):
         parsed_event = 'follow thread discussion'
-    elif re.match(r"/courses/[^/]+/[^/]+/[^/]+/discussion/threads/[^/]+/unfollow$", event_type):
+    elif re.match(r"/courses/.+/discussion/threads/[^/]+/unfollow$", event_type):
         parsed_event = 'unfollow thread discussion'
-    elif re.match(r"/courses/[^/]+/[^/]+/[^/]+/discussion/threads/[^/]+/reply$", event_type):
+    elif re.match(r"/courses/.+/discussion/threads/[^/]+/reply$", event_type):
         parsed_event = 'reply thread discussion'
-    elif re.match(r"/courses/[^/]+/[^/]+/[^/]+/discussion/threads/[^/]+/upvote$", event_type):
+    elif re.match(r"/courses/.+/discussion/threads/[^/]+/upvote$", event_type):
         parsed_event = 'upvote thread discussion'
-    elif re.match(r"/courses/[^/]+/[^/]+/[^/]+/discussion/threads/[^/]+/unvote$", event_type):
+    elif re.match(r"/courses/.+/discussion/threads/[^/]+/unvote$", event_type):
         parsed_event = 'unvote thread discussion'
-    elif re.match(r"/courses/[^/]+/[^/]+/[^/]+/discussion/threads/[^/]+/delete$", event_type):
+    elif re.match(r"/courses/.+/discussion/threads/[^/]+/delete$", event_type):
         parsed_event = 'delete thread discussion'
-    elif re.match(r"/courses/[^/]+/[^/]+/[^/]+/discussion/threads/[^/]+/update$", event_type):
+    elif re.match(r"/courses/.+/discussion/threads/[^/]+/update$", event_type):
         parsed_event = 'update thread discussion'
-    elif re.match(r"/courses/[^/]+/[^/]+/[^/]+/discussion/threads/[^/]+/pin$", event_type):
+    elif re.match(r"/courses/.+/discussion/threads/[^/]+/pin$", event_type):
         parsed_event = 'pin thread discussion'
-    elif re.match(r"/courses/[^/]+/[^/]+/[^/]+/discussion/threads/[^/]+/unpin$", event_type):
+    elif re.match(r"/courses/.+/discussion/threads/[^/]+/unpin$", event_type):
         parsed_event = 'unpin thread discussion'
-    elif re.match(r"/courses/[^/]+/[^/]+/[^/]+/discussion/threads/[^/]+/flagAbuse$", event_type):
+    elif re.match(r"/courses/.+/discussion/threads/[^/]+/flagAbuse$", event_type):
         parsed_event = 'flag abuse thread discussion'
-    elif re.match(r"/courses/[^/]+/[^/]+/[^/]+/discussion/threads/[^/]+/unFlagAbuse$", event_type):
+    elif re.match(r"/courses/.+/discussion/threads/[^/]+/unFlagAbuse$", event_type):
         parsed_event = 'delete thread discussion'
-    elif re.match(r"/courses/[^/]+/[^/]+/[^/]+/discussion/upload", event_type):
+    elif re.match(r"/courses/.+/discussion/threads/[^/]+/close$", event_type):
+        parsed_event = 'close thread discussion'
+    elif re.match(r"/courses/.+/discussion/upload", event_type):
         parsed_event = 'upload to discussion'
-    elif re.match(r'/courses/[^/]+/[^/]+/[^/]+/info', event_type):
+    elif re.match(r'/courses/.+/info', event_type):
         parsed_event = 'info page'
-    elif re.match(r'/courses/[^/]+/[^/]+/[^/]+/progress', event_type):
+    elif re.match(r'/courses/.+/progress', event_type):
         parsed_event = 'progress page'
-    elif re.match(r"/courses/[^/]+/[^/]+/[^/]+/wiki/.*", event_type):
+    elif re.match(r"/courses/.+/wiki/.*", event_type):
         parsed_event = 'wiki page'
     else:
         parsed_event = event_type
@@ -214,6 +231,158 @@ def get_events_for_week(log_file, certificate_file, user_file, num_weeks, first_
                 y_full.append(1)  # did drop out
 
     return [x_full, y_full, username_full]
+
+
+def simple_count(filename):
+    """get number of lines in file"""
+    lines = 0
+    for line in open(filename):
+        lines += 1
+    return lines
+
+
+def get_events_df(log_file, certificate_file, user_file):
+    """log_file is path to event log
+    certificate_file is path to certificate list
+    num_weeks is number of weeks to collect data for
+    first_day is a datetime of the first day
+    Example: get_events_for_week("../ORDERED_BerkeleyX_Stat_2.1x_1T2014-events.log", ...)
+    """
+    print("Starting", log_file)
+    print(datetime.now())
+    # events_df = pd.DataFrame(np.nan, index=range(0, simple_count(log_file)), columns=['username', 'event', 'date'])
+    # events_df['date'] = events_df['date'].astype(np.datetime64)
+    # events_df['username'] = events_df['username'].astype(str)
+    # events_df['event'] = events_df['event'].astype(float)
+    # events_df_i = 0
+    date_list = []
+    username_list = []
+    event_list = []
+    # Ex. max_date = datetime(2014, 3, 3, 0, 0, 0, 0)
+    # Learning about event types
+    ce_types = get_ce_types()
+    # Find students with certificates
+    cert_df = pd.read_table(certificate_file)
+    user_df = pd.read_table(user_file)
+    cert_df = cert_df[['user_id', 'status']]
+    user_df = user_df[['id', 'username', 'is_staff']]
+    cert_df = user_df.merge(cert_df, left_on='id', right_on='user_id', how='left')
+    students = set((cert_df['username'][cert_df['is_staff'] == 0]).values)
+    # Get events from log_file
+    with open(log_file) as f:
+        for line in f:
+            try:
+                data = json.loads(line)
+            except ValueError:
+                print(line)
+                continue
+            parsed_event = parse_event(data)
+            # Get event time
+            time_element = data['time']
+            username = data['username']
+            if '.' in time_element:
+                date_object = datetime.strptime(time_element[:-6], '%Y-%m-%dT%H:%M:%S.%f')
+            else:
+                date_object = datetime.strptime(time_element[:-6], '%Y-%m-%dT%H:%M:%S')
+            # leave loop if past end date
+            # if date_object > max_date:
+            #     break
+            # Get only data up to set date, and only if student had an event in the first wee
+            if parsed_event in ce_types and username in students:
+                username_list.append(username)
+                event_list.append(ce_types[parsed_event])
+                date_list.append(date_object)
+                # events_df.loc[events_df_i, 'username'] = username
+                # events_df.loc[events_df_i, 'event'] = ce_types[parsed_event]
+                # events_df.loc[events_df_i, 'date'] = date_object
+                # events_df_i += 1
+    events_df = pd.DataFrame({'username': username_list, 'event': event_list, 'date': date_list})
+    print("Total students is " + str((cert_df['is_staff'] == 0).sum()))
+    return events_df
+
+
+def get_events_from_folder_name(name):
+    print(datetime.now())
+    log_file = '../../data2/' + name.replace("-", "_") + '-event.log'
+    certificate_file = '../../data2/' + name + '-certificates_generatedcertificate-prod-analytics.sql'
+    user_file = '../../data2/' + name + '-auth_user-prod-analytics.sql'
+    # TODO: read in from stat file
+    # max_date = datetime(2015, 3, 31, 8, 0, 0, 0)
+    log_df = get_events_df(log_file, certificate_file, user_file)
+    print(datetime.now())
+    with open(name + '.pickle', 'wb') as f:
+        pickle.dump(log_df, f)
+    print(datetime.now())
+
+
+def get_all_event_streams():
+    # TODO: break into self-paced and not self-paced
+    course_df = pd.read_csv('course_summary.csv')
+    course_list = (course_df['course'][course_df['certified'] > 100]).values
+    outlier_cutoff_list = [get_event_streams(x) for x in course_list]
+    outlier_df = pd.DataFrame({'course': course_list, 'outlier_cutoff': outlier_cutoff_list})
+    outlier_df.to_csv('outlier_list.csv')
+    return outlier_df
+
+
+def get_event_streams(course_name):
+    course_df = pd.read_csv('course_summary.csv')
+    this_course_df = course_df[course_df['course'] == course_name]
+    start_date = datetime.strptime(this_course_df['start_date'].values[0], '%Y-%m-%d %H:%M:%S')
+    end_date = datetime.strptime(this_course_df['end_date'].values[0], '%Y-%m-%d %H:%M:%S')
+    last_week = int((end_date - start_date).days / 7)
+
+    with open('course_events/' + course_name + '.pickle', 'rb') as f:
+        log_df = pickle.load(f)
+    log_df['week'] = (log_df['date'] - start_date).dt.days / 7
+    log_df.sort_values(by='date', inplace=True)
+    u_group = log_df.groupby('username')
+    usernames = []
+    u_seqs = []
+    # TODO: replace with course_df lookup
+    self_paced = True
+    if self_paced:
+        log_df['event_offset'] = log_df['event'] + 1  # leave 1 for 0 fill-in
+    else:
+        log_df['event_offset'] = log_df['event'] + 11  # leave 10 for week endings
+    for username, group in u_group:
+        if self_paced:
+            u_seq = group['event_offset'].values
+        else:
+            # Get up to end of first week
+            u_seq = (group['event_offset'][group['week'] < 1]).values
+            u_seq.append(1)  # end of week 1
+            for i in range(1, last_week):
+                u_seq.extend((group['event_offset'][(group['week'] >= i) & (group['week'] < i + 1)]).values)
+            u_seq.extend((group['event_offset'][(group['week'] >= last_week) & (group['date'] < end_date)]).values)
+        usernames.append(username)
+        u_seqs.append(u_seq)
+    user_df = pd.DataFrame({'username': usernames, 'seq': u_seqs})
+    v_len = np.vectorize(len)
+    user_df['seq_len'] = v_len(user_df['seq'])
+    cert_file = "../../data2/" + course_name + "-certificates_generatedcertificate-prod-analytics.sql"
+    user_file = "../../data2/" + course_name + "-auth_user-prod-analytics.sql"
+    cert_df = pd.read_table(cert_file)
+    user_list_df = pd.read_table(user_file)
+    cert_df = cert_df[['user_id', 'status']]
+    user_list_df = user_list_df[['id', 'username', 'is_staff']]
+    cert_df = user_list_df.merge(cert_df, left_on='id', right_on='user_id', how='left')
+    cert_df = cert_df[['username', 'status', 'is_staff']]
+    user_df = user_df.merge(cert_df, on='username')
+    certificate_users = user_df[user_df['status'] == 'downloadable']
+    q1 = np.percentile(certificate_users['seq_len'], 25)
+    q3 = np.percentile(certificate_users['seq_len'], 75)
+    outlier_cutoff = q3 + 1.5 * (q3 - q1)
+    print("25%", np.percentile(certificate_users['seq_len'], 25))
+    print("75%", np.percentile(certificate_users['seq_len'], 75))
+    print('outlier cutoff:', outlier_cutoff)
+    users_to_keep = user_df[(user_df['seq_len'] < outlier_cutoff) & (user_df['status'] == 'downloadable')]
+    user_no_certificate = user_df[(user_df['seq_len'] < outlier_cutoff) & (user_df['status'] != 'downloadable')]
+    user_no_cert_keep = user_no_certificate.sample(len(users_to_keep) * 2)
+    users_keep = pd.concat([users_to_keep, user_no_cert_keep])
+    with open('course_users/' + course_name + '_users.pickle', 'wb') as f:
+        pickle.dump(users_keep, f)
+    return outlier_cutoff
 
 
 if __name__ == "__main__":
