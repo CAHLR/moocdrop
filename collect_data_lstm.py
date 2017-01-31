@@ -43,8 +43,15 @@ def generate_ordered_event_copy(event_log_file_name):
 
 def collect_event_frequency(list_of_course_log_files):
     """gets frequency of event types in log files"""
+    # from collect_data_lstm import collect_event_frequency
+    # import os
+    # import re
+    # file_names = ['../../data2/' + x for x in os.listdir('../../data2') if re.search(r'\.log', x)]
+    # event_freq_list = collect_event_frequency(file_names)
     event_type_count = defaultdict(int)
+    event_course_count = defaultdict(int)
     for log_file in list_of_course_log_files:
+        event_course_counted = set()
         print(log_file)
         with open(log_file) as f:
             for line in f:
@@ -52,11 +59,17 @@ def collect_event_frequency(list_of_course_log_files):
                     data = json.loads(line)
                     parsed_event = parse_event(data)
                     event_type_count[parsed_event] += 1
+                    # Once for each parsed event in a course, add to number of courses
+                    if parsed_event not in event_course_counted:
+                        event_course_count[parsed_event] += 1
+                        event_course_counted.add(parsed_event)
                 except ValueError:
                     print(line)
         with open('progress_event_type_count.pickle', 'wb') as f:
-            pickle.dump(event_type_count, f)
-    return event_type_count
+            pickle.dump([event_type_count, event_course_count], f)
+    # test = pd.DataFrame([{'event': x[0], 'count': x[1]} for x in event_freq.items()])
+    # test = pd.DataFrame([{'event': x[0], 'count': x[1], 'course_count': event_freq_list[1][x[0]]} for x in event_freq_list[0].items()])
+    return [event_type_count, event_course_count]
 
 
 def parse_event(data):
@@ -145,6 +158,8 @@ def parse_event(data):
         parsed_event = 'upload to discussion'
     elif re.match(r'/courses/.+/info', event_type):
         parsed_event = 'info page'
+    elif re.match(r'/courses/.+/pdfbook/', event_type):
+        parsed_event = 'pdf book'
     elif re.match(r'/courses/.+/progress', event_type):
         parsed_event = 'progress page'
     elif re.match(r"/courses/.+/wiki/.*", event_type):
@@ -247,6 +262,7 @@ def get_events_df(log_file, certificate_file, user_file):
     num_weeks is number of weeks to collect data for
     first_day is a datetime of the first day
     Example: get_events_for_week("../ORDERED_BerkeleyX_Stat_2.1x_1T2014-events.log", ...)
+    Writes
     """
     print("Starting", log_file)
     print(datetime.now())
@@ -306,41 +322,66 @@ def get_events_from_folder_name(name):
     log_file = '../../data2/' + name.replace("-", "_") + '-event.log'
     certificate_file = '../../data2/' + name + '-certificates_generatedcertificate-prod-analytics.sql'
     user_file = '../../data2/' + name + '-auth_user-prod-analytics.sql'
-    # TODO: read in from stat file
-    # max_date = datetime(2015, 3, 31, 8, 0, 0, 0)
     log_df = get_events_df(log_file, certificate_file, user_file)
     print(datetime.now())
     with open(name + '.pickle', 'wb') as f:
         pickle.dump(log_df, f)
     print(datetime.now())
+    # import os
+    # for name in next(os.walk('../../data2'))[1]:
+    #     try:
+    #         get_events_from_folder_name(name)
+    #     except OSError:
+    #         print('Skipped', name)
 
 
 def get_all_event_streams():
-    # TODO: break into self-paced and not self-paced
+    # Should run "get_all_event_streams_instructor_paced" and "get_all_event_streams_self_paced" instead
+    # course_df = pd.read_csv('course_summary.csv')
+    # course_list = (course_df['course'][course_df['certified'] > 100]).values
+    # outlier_cutoff_list = [get_event_streams(x) for x in course_list]
+    # outlier_df = pd.DataFrame({'course': course_list, 'outlier_cutoff': outlier_cutoff_list})
+    # outlier_df.to_csv('outlier_list.csv')
+    # return outlier_df
+    return pd.concat([get_all_event_streams_instructor_paced(), get_all_event_streams_self_paced()])
+
+
+def get_all_event_streams_instructor_paced():
     course_df = pd.read_csv('course_summary.csv')
-    course_list = (course_df['course'][course_df['certified'] > 100]).values
+    course_list = (course_df['course'][(course_df['certified'] > 100) & (course_df['instructor_paced'] == 1)]).values
     outlier_cutoff_list = [get_event_streams(x) for x in course_list]
     outlier_df = pd.DataFrame({'course': course_list, 'outlier_cutoff': outlier_cutoff_list})
-    outlier_df.to_csv('outlier_list.csv')
+    outlier_df.to_csv('self_paced_outlier_list.csv')
+    return outlier_df
+
+
+def get_all_event_streams_self_paced():
+    course_df = pd.read_csv('course_summary.csv')
+    course_list = (course_df['course'][(course_df['certified'] > 100) & (course_df['instructor_paced'] == 0)]).values
+    outlier_cutoff_list = [get_event_streams(x) for x in course_list]
+    outlier_df = pd.DataFrame({'course': course_list, 'outlier_cutoff': outlier_cutoff_list})
+    outlier_df.to_csv('instructor_paced_outlier_list.csv')
     return outlier_df
 
 
 def get_event_streams(course_name):
+    print(course_name)
     course_df = pd.read_csv('course_summary.csv')
     this_course_df = course_df[course_df['course'] == course_name]
-    start_date = datetime.strptime(this_course_df['start_date'].values[0], '%Y-%m-%d %H:%M:%S')
-    end_date = datetime.strptime(this_course_df['end_date'].values[0], '%Y-%m-%d %H:%M:%S')
+    start_date = datetime.strptime(this_course_df['start_date'].values[0], '%m/%d/%y %H:%M')  # Format from Excel
+    end_date = datetime.strptime(this_course_df['end_date'].values[0], '%m/%d/%y %H:%M')
     last_week = int((end_date - start_date).days / 7)
-
     with open('course_events/' + course_name + '.pickle', 'rb') as f:
         log_df = pickle.load(f)
-    log_df['week'] = (log_df['date'] - start_date).dt.days / 7
+    # Drop events after end of course
+    log_df = log_df[log_df['date'] < end_date]
     log_df.sort_values(by='date', inplace=True)
+    log_df['week'] = (log_df['date'] - start_date).dt.days / 7
     u_group = log_df.groupby('username')
     usernames = []
     u_seqs = []
-    # TODO: replace with course_df lookup
-    self_paced = True
+    # convert instructor paced to self-paced
+    self_paced = this_course_df['instructor_paced'].iloc[0] == 0
     if self_paced:
         log_df['event_offset'] = log_df['event'] + 1  # leave 1 for 0 fill-in
     else:
@@ -348,15 +389,23 @@ def get_event_streams(course_name):
     for username, group in u_group:
         if self_paced:
             u_seq = group['event_offset'].values
+            usernames.append(username)
+            u_seqs.append(u_seq)
         else:
             # Get up to end of first week
-            u_seq = (group['event_offset'][group['week'] < 1]).values
-            u_seq.append(1)  # end of week 1
-            for i in range(1, last_week):
-                u_seq.extend((group['event_offset'][(group['week'] >= i) & (group['week'] < i + 1)]).values)
-            u_seq.extend((group['event_offset'][(group['week'] >= last_week) & (group['date'] < end_date)]).values)
-        usernames.append(username)
-        u_seqs.append(u_seq)
+            u_seq = (group['event_offset'][group['week'] < 1]).tolist()
+            # Only include users who took some action in the first week
+            if len(u_seq) > 0:
+                u_seq.append(1)  # end of week 1
+                # Get all weeks, up to a max of 10
+                for i in range(1, min(last_week, 10)):
+                    u_seq.extend((group['event_offset'][(group['week'] >= i) & (group['week'] < i + 1)]).tolist())
+                    u_seq.append(i + 1)
+                # Add all events past end of last week
+                u_seq.extend(
+                    (group['event_offset'][(group['week'] >= last_week) & (group['date'] < end_date)]).tolist())
+                usernames.append(username)
+                u_seqs.append(u_seq)
     user_df = pd.DataFrame({'username': usernames, 'seq': u_seqs})
     v_len = np.vectorize(len)
     user_df['seq_len'] = v_len(user_df['seq'])
@@ -383,6 +432,79 @@ def get_event_streams(course_name):
     with open('course_users/' + course_name + '_users.pickle', 'wb') as f:
         pickle.dump(users_keep, f)
     return outlier_cutoff
+
+
+def get_all_event_stream_test():
+        course_df = pd.read_csv('instructor_paced_fold_list.csv')
+    for course in course_df['course']:
+        get_event_stream_test(course)
+
+
+def get_event_stream_test(course_name):
+    """Get full event stream for testing how well model works"""
+    print(course_name)
+    course_df = pd.read_csv('course_summary.csv')
+    this_course_df = course_df[course_df['course'] == course_name]
+    start_date = datetime.strptime(this_course_df['start_date'].values[0], '%m/%d/%y %H:%M')  # Format from Excel
+    end_date = datetime.strptime(this_course_df['end_date'].values[0], '%m/%d/%y %H:%M')
+    last_week = int((end_date - start_date).days / 7)
+    with open('course_events/' + course_name + '.pickle', 'rb') as f:
+        log_df = pickle.load(f)
+    # Drop events after end of course
+    log_df = log_df[log_df['date'] < end_date]
+    log_df.sort_values(by='date', inplace=True)
+    log_df['week'] = (log_df['date'] - start_date).dt.days / 7
+    u_group = log_df.groupby('username')
+    usernames = []
+    u_seqs = []
+    weeks = []  # number of weeks included in each u_seq
+    # convert instructor paced to self-paced
+    self_paced = this_course_df['instructor_paced'].iloc[0] == 0
+    if self_paced:
+        log_df['event_offset'] = log_df['event'] + 1  # leave 1 for 0 fill-in
+    else:
+        log_df['event_offset'] = log_df['event'] + 11  # leave 10 for week endings
+    for username, group in u_group:
+        if self_paced:
+            # Need personal week for each username
+            raise NotImplementedError('need to decide how to split weeks for self-paced')
+            # u_seq = group['event_offset'].values
+            # usernames.append(username)
+            # u_seqs.append(u_seq)
+        else:
+            # Get up to end of first week
+            u_seq = (group['event_offset'][group['week'] < 1]).tolist()
+            # Only include users who took some action in the first week
+            if len(u_seq) > 0:
+                u_seq.append(1)  # end of week 1
+                usernames.append(username)
+                weeks.append(1)
+                u_seqs.append(list(u_seq))  # append a copy of u_seq
+                # Get all weeks, up to a max of 10
+                for i in range(1, min(last_week, 10)):
+                    u_seq.extend((group['event_offset'][(group['week'] >= i) & (group['week'] < i + 1)]).tolist())
+                    u_seq.append(i + 1)
+                    usernames.append(username)
+                    weeks.append(i + 1)
+                    u_seqs.append(list(u_seq))
+                # Not adding events after last week
+                # u_seq.extend(
+                #     (group['event_offset'][(group['week'] >= last_week) & (group['date'] < end_date)]).tolist())
+    user_df = pd.DataFrame({'username': usernames, 'seq': u_seqs, 'week': weeks})
+    v_len = np.vectorize(len)
+    user_df['seq_len'] = v_len(user_df['seq'])
+    cert_file = "../../data2/" + course_name + "-certificates_generatedcertificate-prod-analytics.sql"
+    user_file = "../../data2/" + course_name + "-auth_user-prod-analytics.sql"
+    cert_df = pd.read_table(cert_file)
+    user_list_df = pd.read_table(user_file)
+    cert_df = cert_df[['user_id', 'status']]
+    user_list_df = user_list_df[['id', 'username', 'is_staff']]
+    cert_df = user_list_df.merge(cert_df, left_on='id', right_on='user_id', how='left')
+    cert_df = cert_df[['username', 'status', 'is_staff']]
+    user_df = user_df.merge(cert_df, on='username')
+    with open('course_users/' + course_name + '_users_full.pickle', 'wb') as f:
+        pickle.dump(user_df, f)
+    return user_df
 
 
 if __name__ == "__main__":
