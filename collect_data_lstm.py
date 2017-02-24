@@ -6,6 +6,8 @@ import pandas as pd
 import numpy as np
 import pickle
 
+# Main code is get_all_event_streams_instructor_paced
+
 
 def generate_ordered_event_copy(event_log_file_name):
     """
@@ -435,7 +437,7 @@ def get_event_streams(course_name):
 
 
 def get_all_event_stream_test():
-        course_df = pd.read_csv('instructor_paced_fold_list.csv')
+    course_df = pd.read_csv('instructor_paced_fold_list.csv')
     for course in course_df['course']:
         get_event_stream_test(course)
 
@@ -506,37 +508,5 @@ def get_event_stream_test(course_name):
         pickle.dump(user_df, f)
     return user_df
 
-
-if __name__ == "__main__":
-    course_list = [
-        ("../ORDERED_DelftX_AE1110x_1T2014.log",
-            "../../data/DelftX-AE1110x-1T2014-certificates_generatedcertificate-prod-analytics.sql",
-            "../../data/DelftX-AE1110x-1T2014-auth_user-prod-analytics.sql",
-            datetime(2014, 2, 24, 0, 30, 0, 0)),
-        ("../ORDERED_BerkeleyX_Stat_2.1x_1T2014-events.log",
-            "../../data/BerkeleyX-Stat_2.1x-1T2014-certificates_generatedcertificate-prod-analytics.sql",
-            "../../data/BerkeleyX-Stat_2.1x-1T2014-auth_user-prod-analytics.sql",
-            datetime(2014, 2, 23, 23, 0, 0, 0)),
-        # ("../ORDERED_DelftX_AE1110x_2T2015-events.log",
-        #     "../../data/DelftX-AE1110x-2T2015-certificates_generatedcertificate-prod-analytics.sql",
-        #     "../../data/DelftX-AE1110x-2T2015-auth_user-prod-analytics.sql",
-        #     datetime(2015, 6, 2, 16, 0, 0, 0)),
-        ("../ORDERED_DelftX_EX101x_1T2015.log",
-            "../../data/DelftX-EX101x-1T2015-certificates_generatedcertificate-prod-analytics.sql",
-            "../../data/DelftX-EX101x-1T2015-auth_user-prod-analytics.sql",
-            datetime(2015, 3, 31, 8, 0, 0, 0))
-        # ("../ORDERED_DelftX_EX101x_3T2015.log",
-        #     "../../data/DelftX-EX101x-3T2015-certificates_generatedcertificate-prod-analytics.sql",
-        #     "../../data/DelftX-EX101x-3T2015-auth_user-prod-analytics.sql",
-        #     datetime(2015, 8, 31, 8, 0, 0, 0))
-        ]
-    all_list = {}
-    for week_num in range(1, 6):
-        for course in course_list:
-                [x_all, y_all, username_full] = get_events_for_week(course[0], course[1], course[2], week_num, course[3])
-                all_list[course[0]] = {'x_full': x_all, 'y_full': y_all, 'username_full': username_full}
-        with open('week_' + str(week_num) + '_data_courses.pickle', 'wb') as f:
-            pickle.dump(all_list, f)
-        all_list = {}
 
 # At this point, main code moves to run_lstm.py

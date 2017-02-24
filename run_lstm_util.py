@@ -10,6 +10,7 @@ from sklearn import metrics
 
 
 def create_model_from_courses(course_list, self_paced=False):
+    """Fits LSTM model based on the courses in the list course_list"""
     # course = 'RiceX-AdvBIO.5x-2016T1'
     df_list = []
     for course in course_list:
@@ -67,7 +68,7 @@ def save_keras_weights_to_disk(keras_model, save_models_to_folder, model_name):
 
 def load_keras_weights_from_disk(save_models_to_folder, model_name):
     """
-    Loads from disk to output
+    Loads model from disk, returns loaded model
     """
     with open(save_models_to_folder + "/" + model_name + ".json", 'r') as json_file:
         keras_model = model_from_json(json_file.readline())
@@ -77,8 +78,10 @@ def load_keras_weights_from_disk(save_models_to_folder, model_name):
 
 
 def train_cross_validation_models(fold_list_path, self_paced=False):
+    """trains 5-folds of cross-validation based on the courses in the csv at fold_list_path"""
     fold_df = pd.read_csv(fold_list_path)
-    for i in range(2, 5):  # TODO: change 2 back to 0
+    for i in range(0, 5):
+        # Skip courses with fold id
         course_list = fold_df['course'][fold_df['exclude_fold'] != i]
         keras_model = create_model_from_courses(course_list, self_paced)
         if self_paced:
@@ -89,6 +92,7 @@ def train_cross_validation_models(fold_list_path, self_paced=False):
 
 
 def calculate_auc_for_all():
+    """Calculates AUC for all courses listed in instructor_paced_fold_list.csv"""
     course_df = pd.read_csv('instructor_paced_fold_list.csv')
     fold_groups = course_df.groupby('exclude_fold')
     result_list = []

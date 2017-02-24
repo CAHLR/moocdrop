@@ -16,9 +16,9 @@ With results of `run_ensemble.py` in memory, you can combine output results with
 
 
 ## RNN LSTM code
-To collect data in the proper format for RNN anaysis, run `collect_data_lstm.py`
-and it will write to one file per week of analysis called `week_1_data_courses.pickle`.
-Change the filenames at the end to change the courses analyzed.
-
-Run the LSTM with `run_lstm.py`. Change the courses analyzed by changing
-`cross_sets` in that file.
+To collect data in the proper format for RNN anaysis, import `collect_data_lstm.py`
+and run `get_all_event_streams_instructor_paced()`
+and it will write users for training to `'course_users/' + course_name + '_users.pickle'`
+and users for testing to `'course_users/' + course_name + '_users_full.pickle'`.
+Run the LSTM with `run_lstm.py`.
+Calculate AUC scores with `run_lstm_util.calculate_auc_for_all()`
