@@ -12,12 +12,31 @@ from sklearn import metrics
 def create_model_from_courses(course_list, self_paced=False):
     """Fits LSTM model based on the courses in the list course_list"""
     # course = 'RiceX-AdvBIO.5x-2016T1'
-    df_list = []
+    df_local = pd.DataFrame({'A' : []})
+    global df_local
     for course in course_list:
         with open('course_users/' + course + '_users.pickle', 'rb') as f:
             df_local = pickle.load(f)
-            df_list.append(df_local)
-    all_users = pd.concat(df_list)
+#             df_list.append(df_local)
+    all_users = df_local
+    try:
+        del all_users['status']
+        del all_users['is_staff']
+        del all_users['seq_len']
+    except:
+        pass
+    
+    #only for cs169
+    for course in course_list:
+        with open('course_attr/' + course + '_full_users.pickle', 'rb') as f:
+            df_local = pd.DataFrame(pickle.load(f))
+    new_y = df_local.rename(columns={0:'username',1:'rseq'})
+    username_list = all_users.username.values #username list passed into x
+    y_included = new_y[new_y['username'].isin(username_list)]
+    y_excluded = new_y[~new_y['username'].isin(username_list)]
+    RESULT = pd.merge(all_users, y_included, right_on='username', left_on='username', how='outer',suffixes=('_orig', '_new'))
+    all_users = RESULT
+    
     if self_paced:
         max_seq_len = 13100  # Maximum sequence for input users
         max_input_dim = 78  # 77 event types, plus 1 for 0 screen
@@ -34,11 +53,11 @@ def create_model_from_courses(course_list, self_paced=False):
     # weight_array = (padded_event_list != 0).astype(int)  # mask_zero replacement
     event_list_binary = [np_utils.to_categorical(x, max_input_dim) for x in event_list]
     x_train = sequence.pad_sequences(event_list_binary, maxlen=max_seq_len, dtype='int32',
-                                     padding='post', truncating='post')
+                                     padding='post', truncating='post')                           
     student_number = len(all_users)
-    y = (all_users['status'] == 'downloadable').astype(int).values
-    y = np.reshape(y, (student_number, 1, 1))
-    y_repeat = np.broadcast_to(y, (student_number, max_seq_len, 1))
+#     y = (all_users['status'] == 'downloadable').astype(int).values #11100000
+    y = all_users['rseq'].apply(pd.Series).as_matrix()
+    reshaped_y = np.reshape(y, (student_number,max_seq_len,1))
 
     model = Sequential()
     hidden_size = 100
@@ -49,7 +68,8 @@ def create_model_from_courses(course_list, self_paced=False):
     model.add(TimeDistributed(Dense(1)))
     model.add(Activation('sigmoid'))
     model.compile(loss='binary_crossentropy', optimizer='RMSprop', metrics=['accuracy'], sample_weight_mode='temporal')
-    model.fit(np.array(x_train), y_repeat, 64, 5)
+    # 64 is batch size, 5 is epoch
+    model.fit(np.array(x_train), reshaped_y, 64, 50)
     # out = model.predict(x_train)
     # with open('test_model_output.pickle', 'wb') as f:
     #     pickle.dump([out, x_train, y_repeat], f)

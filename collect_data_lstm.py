@@ -5,9 +5,12 @@ import re
 import pandas as pd
 import numpy as np
 import pickle
+import glob
+import xml.etree.ElementTree as ET
 
 # Main code is get_all_event_streams_instructor_paced
-
+GENPATH = "./"
+COURSES = ["BerkeleyX-ColWri.3.10-1T2016", "BerkeleyX-CS169.2x-1T2016"]
 
 def generate_ordered_event_copy(event_log_file_name):
     """
@@ -337,6 +340,25 @@ def get_events_from_folder_name(name):
     #         print('Skipped', name)
 
 
+def get_events_from_folder_name_generic(name, home_path, target_path):
+    print(datetime.datetime.now())
+    log_file = home_path + name.replace("-", "_") + '-event.log'
+    certificate_file = home_path + name + '-certificates_generatedcertificate-prod-analytics.sql'
+    user_file = home_path + name + '-auth_user-prod-analytics.sql'
+    log_df = get_events_df(log_file, certificate_file, user_file)
+    print(datetime.datetime.now())
+    # target_path and home_path should end in /
+    with open(target_path + name + '.pickle', 'wb') as f:
+        pickle.dump(log_df, f)
+    print(datetime.datetime.now())
+    # import os
+    # for name in next(os.walk('../../data2'))[1]:
+    #     try:
+    #         get_events_from_folder_name(name)
+    #     except OSError:
+    #         print('Skipped', name)
+
+
 def get_all_event_streams():
     # Should run "get_all_event_streams_instructor_paced" and "get_all_event_streams_self_paced" instead
     # course_df = pd.read_csv('course_summary.csv')
@@ -348,10 +370,11 @@ def get_all_event_streams():
     return pd.concat([get_all_event_streams_instructor_paced(), get_all_event_streams_self_paced()])
 
 
-def get_all_event_streams_instructor_paced():
-    course_df = pd.read_csv('course_summary.csv')
+def get_all_event_streams_instructor_paced(home_path):
+    course_df = pd.read_csv('2_course_summary.csv')
     course_list = (course_df['course'][(course_df['certified'] > 100) & (course_df['instructor_paced'] == 1)]).values
-    outlier_cutoff_list = [get_event_streams(x) for x in course_list]
+    outlier_cutoff_list = [get_event_streams_train(x, home_path) for x in course_list]
+    outlier_cutoff_list_test = [get_event_streams_test(x, home_path) for x in course_list]
     outlier_df = pd.DataFrame({'course': course_list, 'outlier_cutoff': outlier_cutoff_list})
     outlier_df.to_csv('self_paced_outlier_list.csv')
     return outlier_df
@@ -360,18 +383,19 @@ def get_all_event_streams_instructor_paced():
 def get_all_event_streams_self_paced():
     course_df = pd.read_csv('course_summary.csv')
     course_list = (course_df['course'][(course_df['certified'] > 100) & (course_df['instructor_paced'] == 0)]).values
-    outlier_cutoff_list = [get_event_streams(x) for x in course_list]
+    outlier_cutoff_list = [get_event_streams_train(x) for x in course_list]
+    outlier_cutoff_list_test = [get_event_streams_test(x, home_path) for x in course_list]
     outlier_df = pd.DataFrame({'course': course_list, 'outlier_cutoff': outlier_cutoff_list})
     outlier_df.to_csv('instructor_paced_outlier_list.csv')
     return outlier_df
 
-
-def get_event_streams(course_name):
+# splits T into weeks
+def get_event_streams_train(course_name, home_path):
     print(course_name)
     course_df = pd.read_csv('course_summary.csv')
     this_course_df = course_df[course_df['course'] == course_name]
-    start_date = datetime.strptime(this_course_df['start_date'].values[0], '%m/%d/%y %H:%M')  # Format from Excel
-    end_date = datetime.strptime(this_course_df['end_date'].values[0], '%m/%d/%y %H:%M')
+    start_date = datetime.datetime.strptime(this_course_df['start_date'].values[0], '%m/%d/%y %H:%M')  # Format from Excel
+    end_date = datetime.datetime.strptime(this_course_df['end_date'].values[0], '%m/%d/%y %H:%M')
     last_week = int((end_date - start_date).days / 7)
     with open('course_events/' + course_name + '.pickle', 'rb') as f:
         log_df = pickle.load(f)
@@ -411,8 +435,8 @@ def get_event_streams(course_name):
     user_df = pd.DataFrame({'username': usernames, 'seq': u_seqs})
     v_len = np.vectorize(len)
     user_df['seq_len'] = v_len(user_df['seq'])
-    cert_file = "../../data2/" + course_name + "-certificates_generatedcertificate-prod-analytics.sql"
-    user_file = "../../data2/" + course_name + "-auth_user-prod-analytics.sql"
+    cert_file = home_path + course_name + "-certificates_generatedcertificate-prod-analytics.sql"
+    user_file = home_path + course_name + "-auth_user-prod-analytics.sql"
     cert_df = pd.read_table(cert_file)
     user_list_df = pd.read_table(user_file)
     cert_df = cert_df[['user_id', 'status']]
@@ -431,10 +455,10 @@ def get_event_streams(course_name):
     user_no_certificate = user_df[(user_df['seq_len'] < outlier_cutoff) & (user_df['status'] != 'downloadable')]
     user_no_cert_keep = user_no_certificate.sample(len(users_to_keep) * 2)
     users_keep = pd.concat([users_to_keep, user_no_cert_keep])
+    #     add code to have auto-creation of folders
     with open('course_users/' + course_name + '_users.pickle', 'wb') as f:
         pickle.dump(users_keep, f)
     return outlier_cutoff
-
 
 def get_all_event_stream_test():
     course_df = pd.read_csv('instructor_paced_fold_list.csv')
@@ -442,7 +466,7 @@ def get_all_event_stream_test():
         get_event_stream_test(course)
 
 
-def get_event_stream_test(course_name):
+def get_event_stream_test(course_name, home_path):
     """Get full event stream for testing how well model works"""
     print(course_name)
     course_df = pd.read_csv('course_summary.csv')
@@ -495,8 +519,8 @@ def get_event_stream_test(course_name):
     user_df = pd.DataFrame({'username': usernames, 'seq': u_seqs, 'week': weeks})
     v_len = np.vectorize(len)
     user_df['seq_len'] = v_len(user_df['seq'])
-    cert_file = "../../data2/" + course_name + "-certificates_generatedcertificate-prod-analytics.sql"
-    user_file = "../../data2/" + course_name + "-auth_user-prod-analytics.sql"
+    cert_file = home_path + course_name + "-certificates_generatedcertificate-prod-analytics.sql"
+    user_file = home_path + course_name + "-auth_user-prod-analytics.sql"
     cert_df = pd.read_table(cert_file)
     user_list_df = pd.read_table(user_file)
     cert_df = cert_df[['user_id', 'status']]
@@ -510,3 +534,108 @@ def get_event_stream_test(course_name):
 
 
 # At this point, main code moves to run_lstm.py
+
+def attritionLabels():
+    for course in COURSES:
+        print (course)
+        for_file_lookup_coursename = course.replace('-','_')
+        ordered_course_file_log = 'ORDERED_'+for_file_lookup_coursename+'-event.log' 
+        with open(ordered_course_file_log) as f:
+            ordered_event_list = f.readlines()
+        #student actions, ordered by time
+        student_actions = stusort(ordered_event_list)
+        no_of_students = len(student_actions)
+        #course start and end date
+        course_dates = coursedates(course) #returns start, end, no of weeks
+        start_date = course_dates[0]
+        end_date = course_dates[1]
+        num_weeks = course_dates[2]
+        student_labels = [] 
+        i = 0
+        for student in student_actions:
+            last_action_index = len(student_actions[student])-1
+            last_action_time_messy = student_actions[student][last_action_index]['time'].split('+')[0]
+            last_action_time_clean = datetime.datetime.strptime(last_action_time_messy, '%Y-%m-%dT%H:%M:%S.%f' if '.' in last_action_time_messy else '%Y-%m-%dT%H:%M:%S')
+            if last_action_time_clean.date() > end_date.date():
+                labels = [0]*7000
+            elif last_action_time_clean.date() < start_date.date():
+                labels = [1]*7000 # max sequence length is 7000
+            else: #1578, 2192
+                two_days_before = last_action_time_clean - timedelta(days=2)
+                labels = [0]*7000
+                index = 0
+                for action in student_actions[student]:
+                    messy_event_time = action['time'].split('+')[0]
+                    clean_event_type = datetime.datetime.strptime(messy_event_time, '%Y-%m-%dT%H:%M:%S.%f' if '.' in messy_event_time else '%Y-%m-%dT%H:%M:%S')
+                    if clean_event_type > two_days_before:
+                        for num in range(index, 7000):
+                            labels[num] = 1
+                        break                       
+                    else:
+                        index +=1
+            student_labels.append([student, labels])
+        #splitting data 80:20 into train and test
+        train = student_labels[:int(round(len(student_labels)*0.8))]
+        test = student_labels[int(round(len(student_labels)*0.8)):]
+#       training = train[:int(round(len(train)*0.8))]
+#       validation = train[int(round(len(train)*0.8)):]
+        with open('course_attr/' + course + '_train_users.pickle', 'wb') as f:
+            pickle.dump(train, f)
+        with open('course_attr/' + course + '_test_users.pickle', 'wb') as f:
+            pickle.dump(test, f)
+        with open('course_attr/' + course + '_full_users.pickle', 'wb') as f:
+            pickle.dump(student_labels, f)
+    return len(student_labels)
+    
+def stusort(timedat):
+    '''Group time-sorted data by student:
+       returned: {'stuX':[dict_time0, dict_time3, dict_time4],
+                  'stuY':[dict_time1, dict_time2], ...}
+       Note that events in returned dict are aggregated across weeks, within:
+       [course_start, uppertimelim], across all students in dictionary.
+    '''
+    # make the dict:
+    studat = {}
+    for i in timedat:
+        i = json.loads(i)
+        # limit by week:
+        messytime = i['time'].split('+')[0]
+        cleantime = datetime.datetime.strptime(messytime, '%Y-%m-%dT%H:%M:%S.%f' if '.' in messytime else '%Y-%m-%dT%H:%M:%S')
+        # # If we don't want aggregated data... (each week includes only that week)
+        # NOTE: update function inputs to use this
+        # if cleantime < timelimit_start:
+        #     # not at desired week yet, keep going
+        #     # (ensures recorded data is not aggregated across different weeks)
+        #     continue
+#         if cleantime > uppertimelim:
+            # gone too far, break out of loop
+#             break
+        # if we've made it this far, we're in the right week! record:
+        tmp_id = i['username']
+        # if that student has already been added:
+        if tmp_id in studat:
+            studat[tmp_id].append(i)
+        # otherwise... create a new one!
+        else:
+            studat[tmp_id] = [i]
+    return studat
+
+def coursedates(course):
+    '''Look in all course folders for start and end dates;
+        return one dictionary of the form...
+        datedict = {'course_A': [start_time, end_time, num_weeks],
+                    'course_B': [start_time, end_time, num_weeks],
+                    ...}
+    '''
+    xml_name = glob.glob(GENPATH + course + "/course/*.xml")[0]
+    tree = ET.parse(xml_name)
+    root = tree.getroot()
+    tmp_start = root.attrib['start'].split("+")[0].strip("Z").strip("\"").strip("\'")
+    tmp_end = root.attrib['end'].split("+")[0].strip("Z").strip("\"").strip("\'")
+    # and now convert times into datetime objects:
+    new_start = datetime.datetime.strptime(tmp_start, '%Y-%m-%dT%H:%M:%S.%f' if '.' in tmp_start else '%Y-%m-%dT%H:%M:%S')
+    new_end = datetime.datetime.strptime(tmp_end, '%Y-%m-%dT%H:%M:%S.%f' if '.' in tmp_end else '%Y-%m-%dT%H:%M:%S')
+    # and compute number of weeks between start and end:
+    num_weeks = round((new_end - new_start).total_seconds()/604800)  # 604800: number of seconds in one week
+    # now append course and info to dictionary:
+    return [new_start, new_end, num_weeks]
