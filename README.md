@@ -17,6 +17,7 @@ With results of `run_ensemble.py` in memory, you can combine output results with
 
 ## RNN LSTM code
 To collect data in the proper format for RNN anaysis, import `collect_data_lstm.py`
+and run `get_events_from_folder_name()` (code in comment at bottom to run for all)
 and run `get_all_event_streams_instructor_paced()`
 and it will write users for training to `'course_users/' + course_name + '_users.pickle'`
 and users for testing to `'course_users/' + course_name + '_users_full.pickle'`.
