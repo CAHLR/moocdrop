@@ -6,10 +6,11 @@ from keras.models import Sequential, model_from_json
 from keras.layers import Dense, LSTM, Activation, Masking
 from keras.layers.wrappers import TimeDistributed
 import pandas as pd
+import my_callback
 from sklearn import metrics
 
-
-def create_model_from_courses(course_list, self_paced=False):
+# TRAINS THE MODEL
+def create_model_from_courses(course_list, self_paced=False):    
     """Fits LSTM model based on the courses in the list course_list"""
     # course = 'RiceX-AdvBIO.5x-2016T1'
     df_local = pd.DataFrame({'A' : []})
@@ -53,12 +54,34 @@ def create_model_from_courses(course_list, self_paced=False):
     # weight_array = (padded_event_list != 0).astype(int)  # mask_zero replacement
     event_list_binary = [np_utils.to_categorical(x, max_input_dim) for x in event_list]
     x_train = sequence.pad_sequences(event_list_binary, maxlen=max_seq_len, dtype='int32',
-                                     padding='post', truncating='post')                           
+                                     padding='post', truncating='post')
+    
     student_number = len(all_users)
 #     y = (all_users['status'] == 'downloadable').astype(int).values #11100000
     y = all_users['rseq'].apply(pd.Series).as_matrix()
     reshaped_y = np.reshape(y, (student_number,max_seq_len,1))
-
+    #x_train = np.array(x_train)
+    #reshaped_y = np.array(reshaped_y)
+    
+    #70:20:10
+    x_size = x_train.size
+#     train_data_x, validation_data_x, test_data_x = np.split(x_train, [int(np.rint(x_size*0.7)), int(np.rint(x_size*0.9))])
+#     train_data_x, validation_data_x, test_data_x = np.split(x_train, [int(np.rint(x_size*0.7)), int(np.rint(x_size*0.9))])
+    train_data_x = x_train[:int(np.rint(len(x_train)*0.7))]
+    test_data_x = x_train[int(np.rint(len(x_train)*0.9)):]
+    validation_data_x = x_train[int(np.rint(len(x_train)*0.7)): int(np.rint(len(x_train)*0.9))]
+    train_data_y = reshaped_y[:int(np.rint(len(reshaped_y)*0.7))]
+    validation_data_y = reshaped_y[int(np.rint(len(reshaped_y)*0.7)):int(np.rint(len(reshaped_y)*0.9))]
+    test_data_y = reshaped_y[int(np.rint(len(reshaped_y)*0.9)):]
+    # print (len(train_data_x))
+#     print (len(train_data_y))
+#     print (len(validation_data_x))
+#     print (len(validation_data_y))
+#     print (len(test_data_x))
+#     print (len(test_data_y))
+    # prepare callback
+    histories = my_callback.Histories()
+    
     model = Sequential()
     hidden_size = 100
     # input_dim is the number of categories
@@ -69,11 +92,12 @@ def create_model_from_courses(course_list, self_paced=False):
     model.add(Activation('sigmoid'))
     model.compile(loss='binary_crossentropy', optimizer='RMSprop', metrics=['accuracy'], sample_weight_mode='temporal')
     # 64 is batch size, 5 is epoch
-    model.fit(np.array(x_train), reshaped_y, 64, 50)
-    # out = model.predict(x_train)
-    # with open('test_model_output.pickle', 'wb') as f:
-    #     pickle.dump([out, x_train, y_repeat], f)
-    return model
+    big_model = model.fit(train_data_x, train_data_y, batch_size=64, epochs=10, validation_data=(validation_data_x,validation_data_y), callbacks=[histories])
+    score = model.evaluate(test_data_x, test_data_y)
+#     score = model.evaluate(test_data_x, test_data_y, verbose=0)
+    print('Test score:', score[0])
+    print('Test accuracy:', score[1])
+    return (model, big_model.history, histories.losses, histories.aucs, score)
 
 
 def save_keras_weights_to_disk(keras_model, save_models_to_folder, model_name):
@@ -100,20 +124,33 @@ def load_keras_weights_from_disk(save_models_to_folder, model_name):
 def train_cross_validation_models(fold_list_path, self_paced=False):
     """trains 5-folds of cross-validation based on the courses in the csv at fold_list_path"""
     fold_df = pd.read_csv(fold_list_path)
-    for i in range(0, 5):
-        # Skip courses with fold id
-        course_list = fold_df['course'][fold_df['exclude_fold'] != i]
-        keras_model = create_model_from_courses(course_list, self_paced)
-        if self_paced:
-            model_name = 'self_paced_' + str(i)
-        else:
-            model_name = 'instructor_paced_' + str(i)
-        save_keras_weights_to_disk(keras_model, 'models/paper_model', model_name)
+    course_list = fold_df['course']
+    keras_model, historyObject, losses, aucs, score = create_model_from_courses(course_list, self_paced)
+    if self_paced:
+        model_name = 'self_paced_'
+    else:
+        model_name = 'instructor_paced_'
+    print (historyObject)
+    print ("losses =",losses)
+    print ("AUCs =",aucs)
+    print ("score =",score)
+    with open('models/results-aucs','w') as f:
+        for item in aucs:
+            f.write(str(aucs))
+    with open('models/results-score','w') as f:
+        score_statement = "score = "+str(score)
+        f.write(score_statement)
+    with open('models/results-history','w') as f:
+        for item in historyObject:
+            f.write(str(item))
+    print ("Saving weights to disk")
+    save_keras_weights_to_disk(keras_model, 'models/paper_model', model_name)
 
-
+# TESTS THE MODEL
 def calculate_auc_for_all():
     """Calculates AUC for all courses listed in instructor_paced_fold_list.csv"""
-    course_df = pd.read_csv('instructor_paced_fold_list.csv')
+#     course_df = pd.read_csv('instructor_paced_fold_list.csv')
+    course_df = pd.read_csv('abridged_list.csv')
     fold_groups = course_df.groupby('exclude_fold')
     result_list = []
     for fold, group in fold_groups:
