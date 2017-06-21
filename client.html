@@ -1,0 +1,55 @@
+<script>
+var dropOutLow;
+var dropOutHigh;
+var compLow;
+var compHigh;
+var certLow;
+var certHigh;
+
+// get the data from the crossFilter
+function get_cross(callback) {
+  callback();
+}
+
+// request data from server
+function get_rec () {
+var settings = {
+  "async": true,
+  "crossDomain": true,
+  "url": "https://server:port/api/rec",
+  "method": "POST",
+  "data":
+  {
+    "dropOutLow": dropOutLow,
+    "dropOutHigh": dropOutHigh,
+    "compLow": compLow,
+    "compHigh": compHigh,
+    "certLow": certLow,
+    "certHigh": certHigh
+  },
+  success: function(response) {
+    var a = response.array
+    for (i = 0; i < a.length; i++) {
+      $('#results > tbody:last-child').append('<tr>' + a[i] + '</tr>'); // add ith element of response array to table
+    }
+    $('#container').css("display", "block");
+  }
+};
+$.ajax(settings);
+}
+
+window.onload = function () {
+  get_cross(function() {
+    get_data();
+  });
+};
+
+</script>
+
+<div id="container" style="width:800px; padding: 20px;display: none;">
+<p style="font-size: 20px; font-weight:bold; font-style:italic;margin-bottom:0px">Results/p>
+<table id="results" style="width:100%">
+  <tbody>
+  </tbody>
+</table>
+</div>

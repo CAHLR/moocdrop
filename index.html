@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+<script>
+function runLatestPrediction() {
+	$.post('/runLatestPrediction', JSON.stringify({"runAnalysis": "True", "students":"All", "verbose":"False"}));
+}
+function getPredictionStatus() {
+	$.get('/getPredictionStatus');
+}
+function getLatestPrediction() {
+	$.get('/getLatestPrediction');
+}
+function runIntervention() {
+	$.post('/runIntervention', JSON.stringify(
+		{
+			"studentIDs": [{"anonymizedId": 34}, {"anonymizedId": 12}, {"anonymizedId": 56}], 
+			"Email": {"Subject":"Hello Student", "Content":"Come back! We love having you in class and want to help you finish!"}
+		}));
+}
+</script>
+</head>
+<body>
+	<button onclick="runLatestPrediction()">run latest prediction</button>
+	<button onclick="getPredictionStatus()">get prediction status</button>
+	<button onclick="getLatestPrediction()">get latest prediction</button>
+	<button onclick="runIntervention()">run intervention</button>
+</body>
