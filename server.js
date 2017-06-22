@@ -8,8 +8,8 @@ var http = require('http');
 var fs = require('fs');
 var querystring = require('querystring');
 
-var pkey = fs.readFileSync('/etc/ssl/server.key').toString();
-var pcert = fs.readFileSync('/etc/ssl/server.crt').toString();
+var pkey = fs.readFileSync('/etc/ssl/cahl.key').toString();
+var pcert = fs.readFileSync('/etc/ssl/cahl.crt').toString();
 var gd = [fs.readFileSync('/etc/ssl/gd_bundle.crt').toString()];
 
 var options = {
@@ -60,7 +60,7 @@ router.use(function(req, res, next) {
  // on routes that end in /email
  // ----------------------------------------------------
    router.route('/email')
-       // get the ids for emails 
+       // get the ids for emails
        .post(function(req, res) {
              var ids = req.body.ids;
              for (i = 0; i < ids.length; i++) {
