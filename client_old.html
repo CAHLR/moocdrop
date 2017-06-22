@@ -1,10 +1,62 @@
+<!-- <script>
+var dropOutLow;
+var dropOutHigh;
+var compLow;
+var compHigh;
+var certLow;
+var certHigh;
 
-<!DOCTYPE html>
-<meta charset="utf-8">
-<title>Crossfilter</title>
+// get the data from the crossFilter
+function get_cross(callback) {
+  callback();
+}
+
+// request data from server
+function get_rec () {
+var settings = {
+  "async": true,
+  "crossDomain": true,
+  "url": "https://server:port/api/rec",
+  "method": "POST",
+  "data":
+  {
+    "dropOutLow": dropOutLow,
+    "dropOutHigh": dropOutHigh,
+    "compLow": compLow,
+    "compHigh": compHigh,
+    "certLow": certLow,
+    "certHigh": certHigh
+  },
+  success: function(response) {
+    var a = response.array
+    for (i = 0; i < a.length; i++) {
+      $('#results > tbody:last-child').append('<tr>' + a[i] + '</tr>'); // add ith element of response array to table
+    }
+    $('#container').css("display", "block");
+  }
+};
+$.ajax(settings);
+}
+
+window.onload = function () {
+  get_cross(function() {
+    get_data();
+  });
+};
+
+</script> -->
+
+<!-- <script src="https://square.github.io/crossfilter/crossfilter.v1.min.js"></script>
+<script type="text/javascript" charset="UTF-8" src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.js" ></script> -->
+<!-- <script
+  src="https://code.jquery.com/jquery-3.2.1.min.js"
+  integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+  crossorigin="anonymous">
+</script> -->
+
 <style>
 
-@import url(http://fonts.googleapis.com/css?family=Yanone+Kaffeesatz:400,700);
+@import url(https://fonts.googleapis.com/css?family=Yanone+Kaffeesatz:400,700);
 
 body {
   font-family: "Helvetica Neue";
@@ -223,14 +275,29 @@ aside {
 
 </div>
 
-<script src="crossfilter.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.js"></script>
+<script src="/static/crossfilter.js"></script>
+<script src="/static/d3.js"></script>
 <script
-  src="https://code.jquery.com/jquery-3.2.1.min.js"
+  src="/static/jQuery.js"
   integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
-  crossorigin="anonymous"></script>
+  crossorigin="anonymous">
+</script>
+
+
+<!-- "https://square.github.io/crossfilter/crossfilter.v1.min.js"
+"https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.js" -->
+
 <script>
+
+var data = [
+ {
+   "anonymizedId": "1",
+   "completionPercent": "67",
+   "attritionPercent": "74",
+   "certificationPercent": "53"
+ }
+ ];
+
 window.filterLimits = {
   'certification-chart': [0, 100],
   'attrition-chart': [0, 100],
@@ -620,7 +687,7 @@ function runIntervention() {
   $.post('runIntervention', JSON.stringify(dataToSend));
 }
 
-drawGraphs("studentPredictions.json", false);
+drawGraphs(data, true);
 $('#getStudentPredictions').on("click", function() {
   drawGraphs("getLatestPrediction", true);
 });

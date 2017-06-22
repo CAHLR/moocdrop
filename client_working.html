@@ -1,7 +1,9 @@
+<script src="/static/d3.js" defer></script>
+<script src="/static/crossfilter.js" defer></script>
 
-<!DOCTYPE html>
+
+
 <meta charset="utf-8">
-<title>Crossfilter</title>
 <style>
 
 @import url(http://fonts.googleapis.com/css?family=Yanone+Kaffeesatz:400,700);
@@ -9,7 +11,7 @@
 body {
   font-family: "Helvetica Neue";
   margin: 40px auto;
-  width: 960px;
+  width: 100%;
   min-height: 2000px;
 }
 
@@ -122,6 +124,11 @@ h1, h2 {
   min-height: 1024px;
 }
 
+#student-list .all-students {
+  height: 200px;
+  overflow-y:scroll;
+}
+
 #student-list .all-students,
 #student-list .day {
   margin-bottom: .4em;
@@ -159,21 +166,18 @@ aside {
 
 </style>
 
+
+
+
+
 <div id="body">
 
 <h1>Student Intervention Selector</h1>
 
-<h2>Select which students need email interventions.</h2>
-
-<button id="getStudentPredictions">Get Student Predictions</button>
-<button id="runLatestPrediction" disabled>Run Latest Prediction</button>
-<button id="getPredictionStatus" disabled>Get Prediction Status</button>
-<br>
-<br>
 <form style="border-style:solid; padding: 20px">
   <h4>Email text</h4>
   <h6>Email Subject</h6>
-  <input id="email-subject" type="text" value="Hello Students"></input>
+  <input id="email-subject" type="text" value="Hello Students">
   <h6>Email Body</h6>
   <textarea id="email-text" style="width:500px; height: 100px">Write your email here</textarea>
   <br>
@@ -183,8 +187,6 @@ aside {
 <br>
 <br>
 <br>
-<!--
-<p>Some questions to consider: How does time-of-day correlate with <a href="javascript:filter([null, [100, 150], null, null])">arrival delay</a>? Are <a href="javascript:filter([null, null, [1700, 2000], null])">longer</a> or <a href="javascript:filter([null, null, [0, 300], null])">shorter</a> flights more likely to arrive early? What happened on <a href="javascript:filter([null, [80, 150], null, [new Date(2001, 0, 12), new Date(2001, 0, 13)]])">January 12</a>? How do flight patterns differ between <a href="javascript:filter([null, null, null, [new Date(2001, 0, 27), new Date(2001, 0, 29)]])">weekends</a> and <a href="javascript:filter([null, null, null, [new Date(2001, 0, 29), new Date(2001, 1, 3)]])">weekdays</a>, or <a href="javascript:filter([[4, 7], null, null, null])">mornings</a> and <a href="javascript:filter([[21, 24], null, null, null])">nights</a>? <a href="https://github.com/square/crossfilter/tree/gh-pages">Fork this example</a> and try your own data! -->
 
 <div id="charts">
   <div id="completion-chart" class="chart">
@@ -196,9 +198,6 @@ aside {
   <div id="certification-chart" class="chart">
     <div class="title">Certification % chance</div>
   </div>
-  <!-- <div id="date-chart" class="chart">
-    <div class="title">Date</div>
-  </div> -->
 </div>
 
 <aside id="totals"><span id="active">-</span> of <span id="total">-</span> students selected.</aside>
@@ -213,24 +212,10 @@ aside {
   </div>
 </div>
 
-<footer>
-  <span style="float:right;">
-    Released under the <a href="http://www.apache.org/licenses/LICENSE-2.0.html">Apache License 2.0</a>.
-    <br>
-    Modified from <a href="http://square.github.io/crossfilter/">Square's Crossfilter demo</a>
-  </span>
-</footer>
-
 </div>
 
-<script src="crossfilter.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.js"></script>
-<script
-  src="https://code.jquery.com/jquery-3.2.1.min.js"
-  integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
-  crossorigin="anonymous"></script>
 <script>
+
 window.filterLimits = {
   'certification-chart': [0, 100],
   'attrition-chart': [0, 100],
@@ -297,20 +282,8 @@ function loadData(error, students) {
         .domain([0, 100])
         .rangeRound([0, 900])) //,
 
-    // barChart()
-    //     .dimension(date)
-    //     .group(dates)
-    //     .round(d3.time.day.round)
-    //   .x(d3.time.scale()
-    //     .domain([new Date(2001, 0, 1), new Date(2001, 3, 1)])
-    //     .rangeRound([0, 10 * 90]))
-    //     .filter([new Date(2001, 1, 1), new Date(2001, 2, 1)])
-
   ];
 
-  // Given our array of charts, which we assume are in the same order as the
-  // .chart elements in the DOM, bind the charts to the DOM and render them.
-  // We also listen to the chart's brush events to update the display.
   var chart = d3.selectAll(".chart")
       .data(charts)
       .each(function(chart) { chart.on("brush", renderAll).on("brushend", renderAll); });
@@ -620,17 +593,7 @@ function runIntervention() {
   $.post('runIntervention', JSON.stringify(dataToSend));
 }
 
-drawGraphs("studentPredictions.json", false);
-$('#getStudentPredictions').on("click", function() {
-  drawGraphs("getLatestPrediction", true);
-});
-$('#runIntervention').on('click', function() {
-  runIntervention();
-});
-$('#runLatestPrediction').on('click', function() {
-  //TODO
-});
-$('#getPredictionStatus').on('click', function() {
-  //TODO
-});
+window.onload = function() {
+  drawGraphs("https://chrisvle.github.io/mooc/abc.csv", true);
+}
 </script>

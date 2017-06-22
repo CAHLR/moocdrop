@@ -22,24 +22,24 @@ var options = {
 
 // create index to url dict
 // create url to index dict
-var index_csv = 'mappings.csv';
-var index_to_url_name = {};
-var url_name_to_index = {};
-fs.readFile(index_csv, 'UTF-8', function(err, csv) {
-  $.csv.toArrays(csv, {}, function(err, data) {
-    for(var i=1 , len=data.length; i<len; i++) {
-      index_to_url_name[data[i][0]] = data[i][1];
-      url_name_to_index[data[i][1]] = data[i][0];
-    }
-  });
-});
+// var index_csv = 'mappings.csv';
+// var index_to_url_name = {};
+// var url_name_to_index = {};
+// fs.readFile(index_csv, 'UTF-8', function(err, csv) {
+//   $.csv.toArrays(csv, {}, function(err, data) {
+//     for(var i=1 , len=data.length; i<len; i++) {
+//       index_to_url_name[data[i][0]] = data[i][1];
+//       url_name_to_index[data[i][1]] = data[i][0];
+//     }
+//   });
+// });
 
 // this will let us get the data from a POST
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
 // set our port
-var port = process.env.PORT || port;
+var port = process.env.PORT || 1335;
 
 app.use(function(req, res, next) {
   res.header("Access-Control-Allow-Origin", "*");
@@ -57,55 +57,15 @@ router.use(function(req, res, next) {
     next();
 });
 
- // on routes that end in /rec
+ // on routes that end in /email
  // ----------------------------------------------------
-   router.route('/rec')
-       // get the recommendation (accessed at POST http://server:1334/rec)
+   router.route('/email')
+       // get the ids for emails 
        .post(function(req, res) {
-             var dropOutLow = req.body.dropOutLow;
-             var dropOutHigh = req.body.dropOutHigh;
-             var compLow = req.body.compLow;
-             var compHigh = req.body.compHigh;
-             var certLow = req.body.certLow;
-             var certHigh = req.body.certHigh;
-
-             var post_data = 5;// data request to model goes here
-
-             var post_options = {
-                host: 'server',
-                port: 'port',
-                path: '/rec',
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'Content-Length': Buffer.byteLength(post_data)
-              }
-            };
-
-            // data is the response
-            var post_req = http.request(post_options, function(response) {
-                  response.setEncoding('utf8');
-                  response.on('data', function (data) {
-                    var result;
-                    var final;
-                     if (data.length > 0) {
-                        result = data.split(" "); // make the model return the alias in a string with a space in between 
-                        for (a = 0; a < result.length; a++) {
-                            final.push(alias_to_email[result[a]]);
-                        }
-                     }
-                     else {
-                         res.status(500).send('No data from Oracle');
-                     }
-                     res.json({array: final});
-                   });
-
-            });
-
-            post_req.on('error', function(e) {
-                res.end();
-            });
-
+             var ids = req.body.ids;
+             for (i = 0; i < ids.length; i++) {
+               console.log(ids[i]);
+             }
         });
 
 // REGISTER OUR ROUTES -------------------------------
