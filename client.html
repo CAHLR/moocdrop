@@ -570,10 +570,12 @@ function drawGraphs(dataUrl, json) {
   }
 }
 
+var ids;
+
 function getIDs(callback) {
-  var ids = [];
+  ids = [];
   for (i = 0; i < $('.anon-student').length; i++) {
-      names.push($('.anon-student')[i].innerHTML);
+      ids.push($('.anon-student')[i].innerHTML);
   }
   console.log(ids);
   callback();
@@ -588,9 +590,6 @@ function send_emails () {
     "data":
     {
       "ids": ids
-    },
-    success: function(response) {
-      console.log("Successfully sent!");
     }
   };
   $.ajax(settings);
