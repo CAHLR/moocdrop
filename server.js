@@ -6,13 +6,17 @@ var http = require('http');
 var fs = require('fs');
 var auth = require('basic-auth');
 var csv = require('csvtojson');
+var nodemailer = require('nodemailer');
+
 
 var csvFilePath = 'studentEmails.csv';  // change this to location of email csv
 var csvPredictionsPath = process.cwd() + '/studentPredictions.csv'; // change this to location of prediction csv
-var gmailUsername = 'me@gmail.com'; // change to the account you want to have sending emails
+var gmailUsername = 'me%40gmail.com'; // change to the account you want to have sending emails, escape @ as '%40'
 var gmailPassword = 'veryLongPassword';  //change to match
 var secretUsername = 'john'  // change: must be shared with client.html
 var secretPassword = 'secret' // change: must be shared with client.html
+
+var transporter = nodemailer.createTransport('smtps://' + gmailUsername + ':' + gmailPassword + '@smtp.gmail.com');
 
 // These should exist on your server to use https
 var pkey = fs.readFileSync('/etc/ssl/cahl.key').toString();
@@ -34,7 +38,7 @@ var port = process.env.PORT || 1335;
 
 app.use(function(req, res, next) {
   res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Accept, X-CSRFToken, chap, seq, vert");
+  res.header("Access-Control-Allow-Headers", "Authorization, Origin, X-Requested-With, Accept, X-CSRFToken, chap, seq, vert");
   res.header("Access-Control-Allow-Methods", "PUT, GET, POST");
   next();
 });
@@ -65,36 +69,43 @@ router.route('/email')
         var emailLookup = {};
         csv()
         .fromFile(csvFilePath)
-        .on('json', (jsonObj)=>{
+        .on('json', function(jsonObj) {
             // combine csv header row and csv line to a json object
             // jsonObj.a ==> 1 or 4
             fullList.push(jsonObj);
-        }).on('done', (error)=>{
-            for (item of fullList) {
+        }).on('done', function(error) {
+            for (var i = 0; i < fullList.length; i++) {
+                var item = fullList[i];
                 emailLookup[item.anonymizedId] = item.email;
             }
             var students = req.body.students;
             var email = req.body.email;
-            for (student of students) {
-                sendEmail(emailLookup[student.anonymizedId], email.Subject, email.Content);
+            for (var i = 0; i < students.length; i++) {
+                var student = students[i];
+                sendEmail(emailLookup[student.anonymizedId], email.Subject, email.Content, function (err) {
+                    if (err) {
+                        console.log("email send failed");
+                    }
+                });
             }
             res.send('sent');
         });
     });
-function sendEmail(email, subject, content) {
-    var send = require('gmail-send')({
-      user: gmailUsername,               // Your GMail account used to send emails
-      pass: gmailPassword,             // Application-specific password
-      to:   email,
-                                            // you also may set array of recipients:
-                                            // [ 'user1@gmail.com', 'user2@gmail.com' ]
-      // from:   '"User" <user@gmail.com>'  // from: by default equals to user
-      // replyTo:'user@gmail.com'           // replyTo: by default undefined
-      subject: subject,
-      text:    content
-      // html:    '<b>html text text</b>'
+function sendEmail(email, subject, content, cb) {
+    var mailOptions = {
+        from: gmailUsername, // sender address
+        to: email, // list of receivers
+        subject: subject, // Subject line
+        text: content // plaintext body
+    };
+
+    // send mail with defined transport object
+    transporter.sendMail(mailOptions, function(error, info){
+        if(error) {
+            cb(error);
+        }
+        cb(null);
     });
-    send();
 }
 router.route('/predictions').get(function(req, res) {
   var credentials = auth(req);
