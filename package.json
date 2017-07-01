@@ -6,12 +6,13 @@
     "start": "node server.js"
   },
   "dependencies": {
+    "basic-auth": "~1.1.0",
     "body-parser": "~1.15.1",
-    "cookie-parser": "~1.4.3",
+    "csvtojson": "~1.1.7",
     "debug": "~2.2.0",
     "express": "~4.13.4",
+    "gmail-send": "^1.2.10",
     "morgan": "~1.7.0",
-    "serve-favicon": "~2.3.0",
-    "request": "~2.81.0"
+    "serve-favicon": "~2.3.0"
   }
 }
