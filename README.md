@@ -24,3 +24,9 @@ and it will write users for training to `'course_users/' + course_name + '_users
 and users for testing to `'course_users/' + course_name + '_users_full.pickle'`.
 Run the LSTM with `run_lstm.py`.
 Calculate AUC scores with `run_lstm_util.calculate_auc_for_all()`
+
+## Setting up email server
+Change username password in client.html.
+Change username, password in server.js to match.
+Change email username and password in server.js to email you will use.
+change file paths in server.js to csvs with lists of student predictions in emails.
