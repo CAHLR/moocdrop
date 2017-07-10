@@ -13,8 +13,8 @@ var csvFilePath = 'studentEmails.csv';  // change this to location of email csv
 var csvPredictionsPath = process.cwd() + '/studentPredictions.csv'; // change this to location of prediction csv
 var gmailUsername = 'me%40gmail.com'; // change to the account you want to have sending emails, escape @ as '%40'
 var gmailPassword = 'veryLongPassword';  //change to match
-var secretUsername = 'john'  // change: must be shared with client.html
-var secretPassword = 'secret' // change: must be shared with client.html
+var secretUsername = 'john';  // change: must be shared with client.html
+var secretPassword = 'secret'; // change: must be shared with client.html
 
 var transporter = nodemailer.createTransport('smtps://' + gmailUsername + ':' + gmailPassword + '@smtp.gmail.com');
 
