@@ -81,19 +81,13 @@ fs.readFile(index_csv, 'UTF-8', function(err, csv) {
 router.route('/email')
     // get the ids for emails
     .post(function(req, res) {
-        for (var i = 0; i < fullList.length; i++) {
-            var item = fullList[i];
-            anon_to_email[item.anonymizedId] = item.email;
-        }
-        var students = req.body.students;
-        var email = req.body.email;
-        for (var j = 0; j < students.length; j++) {
-            var student = students[j];
-            sendEmail(emailLookup[student.anonymizedId], email.Subject, email.Content, function (err) {
-                if (err) {
-                    console.log("email send failed");
-                }
-            });
+        for (var j = 0; j < req.body.ids.length; j++) {
+          console.log(req.body.ids[i]);
+            // sendEmail(anon_to_email[req.body.ids[i]], req.body.subject, req.body.content, function (err) {
+            //     if (err) {
+            //         console.log("email send failed");
+            //     }
+            // });
         }
         res.send('sent');
     });
@@ -122,7 +116,7 @@ router.route('/predictions').get(function(req, res) {
     res.end('Access denied');
     return;
   }
-  res.sendFile(csvDaily);
+  res.json(csvDaily);
 });
 
 // This route exists only for testing your password

@@ -150,12 +150,10 @@ h1, h2 {
   color: green;
 }
 
-/*aside {
-  position: absolute;
-  left: 740px;
+aside {
   font-size: smaller;
-  width: 220px;
-}*/
+  float:right;
+}
 
 </style>
 
@@ -167,10 +165,10 @@ h1, h2 {
 
 <h1>Student Intervention Selector</h1>
 
-  <p>Some student groups to try:
-    <button type="button" id="comp-no-pass">Complete But Not Pass</button>
-    <button type="button" id="cert-drop-out">Certify But Drop Out</button>
-  </p>
+<p>Some student groups to try:
+  <button type="button" id="comp-no-pass">Complete But Not Pass</button>
+  <button type="button" id="cert-drop-out">Certify But Drop Out</button>
+</p>
 
 <div id="charts">
   <div id="completion-chart" class="chart">
@@ -212,9 +210,6 @@ h1, h2 {
 </div>
 
 <script>
-var USERNAME="john";    // Change this to a username and password you create
-var PASSWORD="secret";
-var SERVERNAME="cahl.berkeley.edu";
 
 window.filterLimits = {
   'certification-chart': [0, 100],
@@ -319,15 +314,10 @@ function loadData(error, students) {
         d.substring(6, 8));
   }
 
-  // window.filter = function(filters) {
-  //   filters.forEach(function(d, i) { charts[i].filter(d); });
-  //   renderAll();
-  // };
-
-  function filter(filters) {
+  window.filter = function(filters) {
     filters.forEach(function(d, i) { charts[i].filter(d); });
     renderAll();
-  }
+  };
 
   window.reset = function(i) {
     charts[i].filter(null);
@@ -574,31 +564,38 @@ function loadData(error, students) {
   }
 }
 
+// (It's CSV, but GitHub Pages only gzip's JSON at the moment.)
 function drawGraphs(dataUrl, json) {
   if (json) {
-    d3.json(dataUrl, loadData);
+    d3.json(dataUrl).header("Authorization", "Basic " + btoa("john:secret")).get(loadData);
   } else {
-    d3.csv(dataUrl).header("Authorization", "Basic " + btoa(USERNAME + ":" + PASSWORD)).get(loadData);
+    d3.csv(dataUrl).header("Authorization", "Basic " + btoa("john:secret")).get(loadData);
   }
 }
 
-y
+var ids;
+
+function getIDs(callback) {
+  ids = [];
+  for (i = 0; i < $('.anon-student').length; i++) {
+      ids.push($('.anon-student')[i].innerHTML);
+  }
+  console.log(ids);
+  callback();
+}
 
 function send_emails () {
-  var dataToSend = {
-    "students": window.selectedStudents,
-    "filterLimits": window.filterLimits,
-    "email": {
-      "Subject": $('#email-subject').attr('value'),
-      "Content": $('textarea').text()
-    }
-  }
   var settings = {
     "async": true,
     "crossDomain": true,
-    "url": "https://" + SERVERNAME + ":1337/api/email",
+    "url": "https://cahl.berkeley.edu:1335/api/email",
     "method": "POST",
-    "data": dataToSend,
+    "data":
+    {
+      "ids": ids,
+      "subject": $('#email-subject').attr('value'),
+      "content": $('textarea').text()
+    },
     success: function(response) {
       console.log("Successfully sent!");
       alert("Successfully sent!");
@@ -608,25 +605,18 @@ function send_emails () {
 }
 
 window.onload = function() {
-  function runStuff() {
-    if (typeof(d3) === "undefined" || typeof($) === "undefined" || typeof(crossfilter) === "undefined") {
-      setTimeout(runStuff, 100);
-    } else {
-      // drawGraphs("https://" + SERVERNAME + ":1337/api/predictions");
-      drawGraphs("https://chrisvle.github.io/mooc/studentPredictions.csv", true);
-      $('#emailButton').on('click', function() {
-        if (confirm("Are you sure you want to send this email to " + window.selectedStudents.length + " students?")) {
-          send_emails();
-        }
-      });
-      $('#comp-no-pass').on('click', function() {
-        filter([[80, 100], null, [0, 30]]);
-      });
-      $('#cert-drop-out').on('click', function() {
-        filter([null, [50, 100], [40, 100]])
-      });
+  // drawGraphs("https://chrisvle.github.io/studentPredictions.csv");
+  drawGraphs("https://cahl.berkeley.edu:1336/api/predictions")
+  $('#emailButton').on('click', function() {
+    if (confirm("Are you sure you want to send this email to " + window.selectedStudents.length + " students?")) {
+      getIDs(send_emails);
     }
-  }
-  runStuff();
+  });
+  $('#comp-no-pass').on('click', function() {
+    filter([[80, 100], null, [0, 30]]);
+  });
+  $('#cert-drop-out').on('click', function() {
+    filter([null, [50, 100], [40, 100]])
+  });
 }
 </script>
