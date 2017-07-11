@@ -34,7 +34,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
 // set our port
-var port = process.env.PORT || 1335;
+var port = process.env.PORT || 1336;
 
 app.use(function(req, res, next) {
   res.header("Access-Control-Allow-Origin", "*");
