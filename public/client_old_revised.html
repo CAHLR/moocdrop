@@ -567,10 +567,10 @@ function loadData(error, students) {
 // (It's CSV, but GitHub Pages only gzip's JSON at the moment.)
 function drawGraphs(dataUrl, json) {
   if (json) {
-    d3.json(dataUrl, loadData);
+    d3.json(dataUrl);
   } else {
     d3.csv(dataUrl).header("Authorization", "Basic " + btoa("john:secret")).get(loadData);
-    d3.csv(dataUrl, loadData);
+    // d3.csv(dataUrl, loadData);
   }
 }
 
