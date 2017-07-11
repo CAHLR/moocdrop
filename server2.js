@@ -117,7 +117,7 @@ router.route('/predictions').get(function(req, res) {
     res.end('Access denied');
     return;
   }
-  res.json(csvDaily);
+  res.sendFile(csvDaily);
 });
 
 // This route exists only for testing your password
