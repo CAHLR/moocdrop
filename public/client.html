@@ -337,7 +337,7 @@ function loadData(error, students) {
   function studentList(div) {
     window.selectedStudents = anonymizedId.top(Infinity);
     // Note studentsByDate is just a hack of flightsByDate from original
-    var studentsByDate = nestByDate.entries(anonymizedId.top(40));
+    var studentsByDate = nestByDate.entries(anonymizedId.top(Infinity));
     //
     div.each(function() {
       var date = d3.select(this).selectAll(".all-students")
@@ -582,14 +582,14 @@ function drawGraphs(dataUrl, json) {
   }
 }
 
-var ids;
-
-function getIDs(callback) {
-  ids = [];
-  for (i = 0; i < $('.anon-student').length; i++) {
-      ids.push($('.anon-student')[i].innerHTML);
-  }
-}
+// var ids;
+//
+// function getIDs(callback) {
+//   ids = [];
+//   for (i = 0; i < $('.anon-student').length; i++) {
+//       ids.push($('.anon-student')[i].innerHTML);
+//   }
+// }
 
 function send_emails () {
   var dataToSend = {
