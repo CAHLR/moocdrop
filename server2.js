@@ -5,8 +5,9 @@ var https = require('https');
 var http = require('http');
 var fs = require('fs');
 var auth = require('basic-auth');
-var csv = require('csvtojson');
+// var csv = require('csvtojson');
 var nodemailer = require('nodemailer');
+var $ = jQuery = require('jquery');
 
 
 var csvWeekly = 'MASTER_user_info.csv';  // change this to location of email csv
