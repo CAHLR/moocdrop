@@ -8,7 +8,7 @@ var auth = require('basic-auth');
 // var csv = require('csvtojson');
 var nodemailer = require('nodemailer');
 var $ = jQuery = require('jquery');
-require('jquery.csv.min.js');
+require('/jquery.csv.min.js');
 
 
 
