@@ -567,9 +567,10 @@ function loadData(error, students) {
 // (It's CSV, but GitHub Pages only gzip's JSON at the moment.)
 function drawGraphs(dataUrl, json) {
   if (json) {
-    d3.json(dataUrl).header("Authorization", "Basic " + btoa("john:secret")).get(loadData);
+    d3.json(dataUrl, loadData);
   } else {
     d3.csv(dataUrl).header("Authorization", "Basic " + btoa("john:secret")).get(loadData);
+    d3.csv(dataUrl, loadData);
   }
 }
 
@@ -588,7 +589,7 @@ function send_emails () {
   var settings = {
     "async": true,
     "crossDomain": true,
-    "url": "https://cahl.berkeley.edu:1335/api/email",
+    "url": "https://cahl.berkeley.edu:1336/api/email",
     "method": "POST",
     "data":
     {

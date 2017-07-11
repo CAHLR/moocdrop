@@ -14,6 +14,7 @@ require('../jquery.csv.min.js');
 // NEED TO CHANGE MASTER to get actual, copy over
 var csvWeekly = 'MASTER_user_info.csv';  // change this to location of email csv
 var csvDaily = process.cwd() + '/studentPredictions.csv'; // change this to location of prediction csv
+console.log(process.cwd());
 var gmailUsername = 'berkeleyx.communications%40gmail.com'; // change to the account you want to have sending emails, escape @ as '%40'
 var gmailPassword = 'Jv6TU4AZ7@pdJSsetT*CBeNxhwU%#@6jEDmtRc3wt8NfA3EZ8s3AtVHNNJ%@2eBuUUW#Qv^kg';  //change to match
 var secretUsername = 'john';  // change: must be shared with client.html
