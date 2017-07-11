@@ -11,7 +11,7 @@ var $ = jQuery = require('jquery');
 require('../jquery.csv.min.js');
 
 
-
+// NEED TO CHANGE MASTER to get actual, copy over
 var csvWeekly = 'MASTER_user_info.csv';  // change this to location of email csv
 var csvDaily = process.cwd() + '/studentPredictions.csv'; // change this to location of prediction csv
 var gmailUsername = 'berkeleyx.communications%40gmail.com'; // change to the account you want to have sending emails, escape @ as '%40'
@@ -70,6 +70,7 @@ var anon_to_email = {};
 fs.readFile(index_csv, 'UTF-8', function(err, csv) {
   $.csv.toArrays(csv, {}, function(err, data) {
     for(var i=1 , len=data.length; i<len; i++) {
+      console.log(data[i][3]);
       anon_to_email[data[i][1]] = data[i][3];
     }
   });
