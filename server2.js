@@ -8,6 +8,8 @@ var auth = require('basic-auth');
 // var csv = require('csvtojson');
 var nodemailer = require('nodemailer');
 var $ = jQuery = require('jquery');
+require('jquery.csv.min.js');
+
 
 
 var csvWeekly = 'MASTER_user_info.csv';  // change this to location of email csv
