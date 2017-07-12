@@ -201,7 +201,7 @@ aside {
   <h6>Email Subject</h6>
   <input id="email-subject" type="text" value="Hello Students">
   <h6>Email Body</h6>
-  <textarea id="email-text" style="width:500px; height: 100px">Write your email here</textarea>
+  <textarea id="email-body" style="width:500px; height: 100px">Write your email here</textarea>
   <br>
   <br>
   <button type="button" id="emailButton">Send email to selected students</button>
@@ -594,7 +594,7 @@ function send_emails () {
     {
       "ids": ids,
       "subject": $('#email-subject').attr('value'),
-      "content": $('textarea').text()
+      "body": $('#email-body').attr('value')
     },
     success: function(response) {
       console.log("Successfully sent!");
