@@ -87,6 +87,7 @@ router.route('/email')
           console.log(req.body.subject, req.body.body);
             sendEmail(anon_to_email[req.body.ids[j]], req.body.subject, req.body.body, function (err) {
                 if (err) {
+                    console.log(err);
                     console.log("email send failed");
                 }
             });
