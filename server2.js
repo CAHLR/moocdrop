@@ -32,7 +32,7 @@ fs.readFile(index_csv, 'UTF-8', function(err, csv) {
   });
 });
 
-var transporter = nodemailer.createTransport('smtps://' + gmailUsername + ':' + gmailPassword + '@smtp.gmail.com');
+var transporter = nodemailer.createTransport('smtps://' + gmailUsername + ':' + encodeURI(gmailPassword) + '@smtp.gmail.com');
 
 // These should exist on your server to use https
 var pkey = fs.readFileSync('/etc/ssl/cahl.key').toString();
