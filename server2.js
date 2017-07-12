@@ -20,6 +20,18 @@ var gmailPassword = 'Jv6TU4AZ7@pdJSsetT*CBeNxhwU%#@6jEDmtRc3wt8NfA3EZ8s3AtVHNNJ%
 var secretUsername = 'john';  // change: must be shared with client.html
 var secretPassword = 'secret'; // change: must be shared with client.html
 
+// making anonID to email dict
+var index_csv = csvWeekly;
+var anon_to_email = {};
+fs.readFile(index_csv, 'UTF-8', function(err, csv) {
+  $.csv.toArrays(csv, {}, function(err, data) {
+    for(var i=1 , len=data.length; i<len; i++) {
+      console.log(data[i][1]);
+      anon_to_email[data[i][1]] = data[i][3];
+    }
+  });
+});
+
 var transporter = nodemailer.createTransport('smtps://' + gmailUsername + ':' + gmailPassword + '@smtp.gmail.com');
 
 // These should exist on your server to use https
@@ -64,18 +76,6 @@ function checkCredentials(credentials) {
     return true;
   }
 }
-
-// making anonID to email dict
-var index_csv = csvWeekly;
-var anon_to_email = {};
-fs.readFile(index_csv, 'UTF-8', function(err, csv) {
-  $.csv.toArrays(csv, {}, function(err, data) {
-    for(var i=1 , len=data.length; i<len; i++) {
-      console.log(data[i][3]);
-      anon_to_email[data[i][1]] = data[i][3];
-    }
-  });
-});
 
  // on routes that end in /email
  // ----------------------------------------------------
