@@ -235,7 +235,6 @@ function loadData(error, students) {
   // A little coercion, since the CSV is untyped.
   students.forEach(function(d, i) {
     d.index = i;
-    d.anonymizedId = +d.anonymizedId;
     d.completionPercent = +d.completionPercent;
     d.attritionPercent = +d.attritionPercent;
     d.certificationPercent = +d.certificationPercent;

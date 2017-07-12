@@ -83,12 +83,12 @@ router.route('/email')
     // get the ids for emails
     .post(function(req, res) {
         for (var j = 0; j < req.body.ids.length; j++) {
-          console.log(req.body.ids[j]);
-            // sendEmail(anon_to_email[req.body.ids[i]], req.body.subject, req.body.content, function (err) {
-            //     if (err) {
-            //         console.log("email send failed");
-            //     }
-            // });
+          // console.log(req.body.ids[j]);
+            sendEmail(anon_to_email[req.body.ids[i]], req.body.subject, req.body.content, function (err) {
+                if (err) {
+                    console.log("email send failed");
+                }
+            });
         }
         res.send('sent');
     });
