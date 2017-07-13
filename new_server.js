@@ -7,7 +7,7 @@ var fs = require('fs');
 var auth = require('basic-auth');
 var nodemailer = require('nodemailer');
 var $ = jQuery = require('jquery');
-require('../jquery.csv.min.js');
+require('jquery.csv.min.js');
 
 
 // NEED TO CHANGE MASTER to get actual, copy over
