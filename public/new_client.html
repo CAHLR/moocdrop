@@ -243,7 +243,7 @@ function loadData(error, students) {
   // Create the crossfilter for the relevant dimensions and groups.
   var student = crossfilter(students),
       all = student.groupAll(),
-      anonymizedId = student.dimension(function(d) {return d.anonymizedId}),
+      anonymizedId = student.dimension(function(d) {return d.anon_user_id}),
       completion = student.dimension(function(d) {return d.completionPercent; }),
       completions = completion.group(Math.floor),
       attrition = student.dimension(function(d) {return d.attritionPercent; }),
