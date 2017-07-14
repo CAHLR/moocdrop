@@ -76,7 +76,8 @@ events_df['certification_prediction'] = prediction3
 user_info = pd.read_csv('MASTER_user_info.csv')
 
 new_master_df = pd.merge(events_df, user_info, how='left', on='username')
-new_master_df = new_master_df[np.isfinite(new_master_df['EPS'])]
+print(new_master_df.columns)
+new_master_df = new_master_df[np.isfinite(new_master_df['anon_user_id'])]
 
 
 header = ["anon_user_id", "attrition_prediction", "completion_prediction", "certification_prediction"]
