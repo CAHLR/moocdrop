@@ -235,20 +235,20 @@ function loadData(error, students) {
   // A little coercion, since the CSV is untyped.
   students.forEach(function(d, i) {
     d.index = i;
-    d.completionPercent = +d.completionPercent;
-    d.attritionPercent = +d.attritionPercent;
-    d.certificationPercent = +d.certificationPercent;
+    d.completion_prediction = +d.completion_prediction;
+    d.attrition_prediction = +d.attrition_prediction;
+    d.certification_prediction = +d.certification_prediction;
   });
 
   // Create the crossfilter for the relevant dimensions and groups.
   var student = crossfilter(students),
       all = student.groupAll(),
       anon_user_id = student.dimension(function(d) {return d.anon_user_id}),
-      completion = student.dimension(function(d) {return d.completionPercent; }),
+      completion = student.dimension(function(d) {return d.completion_prediction; }),
       completions = completion.group(Math.floor),
-      attrition = student.dimension(function(d) {return d.attritionPercent; }),
+      attrition = student.dimension(function(d) {return d.attrition_prediction; }),
       attritions = attrition.group(Math.floor),
-      certification = student.dimension(function(d) {return d.certificationPercent; }),
+      certification = student.dimension(function(d) {return d.certification_prediction; }),
       certifications = certification.group(Math.floor);
 
   var charts = [
@@ -352,15 +352,15 @@ function loadData(error, students) {
 
       studentEnter.append("div")
           .attr("class", "completion")
-          .text(function(d) { return d.completionPercent; });
+          .text(function(d) { return d.completion_prediction; });
 
       studentEnter.append("div")
           .attr("class", "attrition")
-          .text(function(d) { return d.attritionPercent; });
+          .text(function(d) { return d.attrition_prediction; });
 
       studentEnter.append("div")
           .attr("class", "certification")
-          .text(function(d) { return d.certificationPercent; });
+          .text(function(d) { return d.certification_prediction; });
 
       student.exit().remove();
 
