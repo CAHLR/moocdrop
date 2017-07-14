@@ -243,7 +243,7 @@ function loadData(error, students) {
   // Create the crossfilter for the relevant dimensions and groups.
   var student = crossfilter(students),
       all = student.groupAll(),
-      anonymizedId = student.dimension(function(d) {return d.anon_user_id}),
+      anon_user_id = student.dimension(function(d) {return d.anon_user_id}),
       completion = student.dimension(function(d) {return d.completionPercent; }),
       completions = completion.group(Math.floor),
       attrition = student.dimension(function(d) {return d.attritionPercent; }),
@@ -324,9 +324,9 @@ function loadData(error, students) {
   };
 
   function studentList(div) {
-    window.selectedStudents = anonymizedId.top(Infinity);
+    window.selectedStudents = anon_user_id.top(Infinity);
     // Note studentsByDate is just a hack of flightsByDate from original
-    var studentsByDate = nestByDate.entries(anonymizedId.top(Infinity));
+    var studentsByDate = nestByDate.entries(anon_user_id.top(Infinity));
     //
     div.each(function() {
       var date = d3.select(this).selectAll(".all-students")
@@ -348,7 +348,7 @@ function loadData(error, students) {
 
       studentEnter.append("div")
           .attr("class", "anon-student")
-          .text(function(d) { return d.anonymizedId; });
+          .text(function(d) { return d.anon_user_id; });
 
       studentEnter.append("div")
           .attr("class", "completion")

@@ -57,19 +57,19 @@ x_train = sequence.pad_sequences(event_list_binary, maxlen=max_seq_len, dtype='i
 attr_model = run_lstm_util.load_keras_weights_from_disk('resources/models/paper_model', 'attr')
 out = attr_model.predict(x_train)
 prediction = out[:, -1, 0]
-# prediction = np.round(prediction)
+prediction = np.round(100 * prediction)
 events_df['attrition_prediction'] = prediction
 
 comp_model = run_lstm_util.load_keras_weights_from_disk('resources/models/paper_model', 'comp')
 out2 = comp_model.predict(x_train)
 prediction2 = out2[:, -1, 0]
-# prediction2 = np.round(prediction2)
+prediction2 = np.round(100 * prediction2)
 events_df['completion_prediction'] = prediction2
 
 cert_model = run_lstm_util.load_keras_weights_from_disk('resources/models/paper_model', 'cert')
 out3 = cert_model.predict(x_train)
 prediction3 = out3[:, -1, 0]
-# prediction3 = np.round(prediction3)
+prediction3 = np.round(100 * prediction3)
 events_df['certification_prediction'] = prediction3
 #returns the probability the student will attrit after 2 days of his last action
 
