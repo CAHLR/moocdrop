@@ -192,7 +192,7 @@ aside {
 }
 
 /* Links inside the dropdown */
-.dropdown-content a {
+.dropdown-content p {
     color: black;
     padding: 12px 16px;
     text-decoration: none;
@@ -200,7 +200,7 @@ aside {
 }
 
 /* Change color of dropdown links on hover */
-.dropdown-content a:hover {background-color: #f1f1f1}
+.dropdown-content p:hover {background-color: #f1f1f1}
 
 /* Show the dropdown menu (use JS to add this class to the .dropdown-content container when the user clicks on the dropdown button) */
 .show {display:block;}
@@ -217,8 +217,9 @@ aside {
 </form>
 
 <div class="dropdown">
-  <button id="dropbtn" class="dropbtn">Dropdown</button>
+  <button onclick="toggleDropdown()" class="dropbtn">Dropdown</button>
   <div id="myDropdown" class="dropdown-content">
+    <p>Sample</p>
   </div>
 </div>
 
@@ -673,6 +674,10 @@ function send_emails () {
   $.ajax(settings);
 }
 
+function toggleDropdown() {
+    document.getElementById("myDropdown").classList.toggle("show");
+}
+
 // Close the dropdown menu if the user clicks outside of it
 window.onclick = function(event) {
   if (!event.target.matches('.dropbtn')) {
@@ -711,13 +716,10 @@ window.onload = function() {
   });
   $('#test').on('click', function() {
     var policy = document.createElement("p");
-    policy.text = "Kiwi";
-    document.getElementById("myDropdown").add(policy);
+    var text = document.createTextNode("This is a new paragraph.");
+    policy.appendChild(text);
+    document.getElementById('myDropdown').appendChild(policy);
   });
-  $('#dropbtn').on('click', function() {
-    document.getElementById("myDropdown").classList.toggle("show");
-  });
-
 };
 
 
