@@ -138,21 +138,20 @@ router.route('/predictions').get(function(req, res) {
   res.sendFile(csvDaily);
 });
 
-// router.route('/policies').get(function(req, res) {
-//   res.json(policies);
-// });
+router.route('/policies').get(function(req, res) {
+  res.json(policy_dict);
+});
 
 // This route exists only for testing your password
 router.route('/').get(function(req, res) {
-  // var credentials = auth(req);
-  // if (!checkCredentials(credentials)) {
-  //   res.statusCode = 401;
-  //   res.setHeader('WWW-Authenticate', 'Basic realm="cahl.berkeley.edu"');
-  //   res.end('Access denied');
-  //   return;
-  // }
-  // res.send("You logged in");
-  res.json(policies);
+  var credentials = auth(req);
+  if (!checkCredentials(credentials)) {
+    res.statusCode = 401;
+    res.setHeader('WWW-Authenticate', 'Basic realm="cahl.berkeley.edu"');
+    res.end('Access denied');
+    return;
+  }
+  res.send("You logged in");
 });
 
 // REGISTER OUR ROUTES -------------------------------
