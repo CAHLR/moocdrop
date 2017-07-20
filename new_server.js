@@ -38,6 +38,10 @@ fs.readFile(index_csv, 'UTF-8', function(err, csv) {
   });
 });
 
+// making policy dictionary
+var policy_dict = {};
+policy_dict.['test'] = ['43',' 77'];
+
 var transporter = nodemailer.createTransport('smtps://' + gmailUsername + ':' + encodeURI(gmailPassword) + '@smtp.gmail.com');
 
 // These should exist on your server to use https
@@ -122,6 +126,7 @@ function sendEmail(email, subject, content, cb) {
         cb(null);
     });
 }
+
 router.route('/predictions').get(function(req, res) {
   var credentials = auth(req);
   if (!checkCredentials(credentials)) {
@@ -131,6 +136,10 @@ router.route('/predictions').get(function(req, res) {
     return;
   }
   res.sendFile(csvDaily);
+});
+
+router.route('/policies').get(function(req, res) {
+  res.json(policies);
 });
 
 // This route exists only for testing your password
