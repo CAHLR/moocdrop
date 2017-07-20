@@ -40,7 +40,7 @@ fs.readFile(index_csv, 'UTF-8', function(err, csv) {
 
 // making policy dictionary
 var policy_dict = {};
-policy_dict.['test'] = ['43',' 77'];
+policy_dict['test'] = ['43',' 77'];
 
 var transporter = nodemailer.createTransport('smtps://' + gmailUsername + ':' + encodeURI(gmailPassword) + '@smtp.gmail.com');
 
