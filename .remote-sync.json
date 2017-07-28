@@ -1,0 +1,15 @@
+{
+  "transport": "scp",
+  "hostname": "cahl.berkeley.edu",
+  "port": 22,
+  "username": "chrisvle",
+  "password": "Cvule1234",
+  "target": "/deepedu/research/moocdrop/live-data/moocdrop",
+  "ignore": [
+    ".remote-sync.json",
+    ".git/**"
+  ],
+  "watch":[
+    "/new_server.js"
+  ]
+}

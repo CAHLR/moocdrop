@@ -29,7 +29,13 @@ fs.readFile(index_csv, 'UTF-8', function(err, csv) {
     for(var i=1 , len=data.length; i<len; i++) {
       console.log(data[i][1]);
       if (data[i][1]) {
-        anon_to_email[data[i][1]] = data[i][3];
+          anon_to_email[data[i][6]] = {'email': data[i][2]};
+          if (data[i][3]) {
+            anon_to_email[data[i][6]]['first'] = data[i][3];
+          }
+          if (data[i][4]) {
+            anon_to_email[data[i][6]]['last'] = data[i][4];
+          }
       }
       else {
         continue;
@@ -40,7 +46,9 @@ fs.readFile(index_csv, 'UTF-8', function(err, csv) {
 
 // making policy dictionary
 var policy_dict = {};
-policy_dict['test'] = ['43',' 77'];
+// policy_dict['test'] = {'ids': ['12','54'], 'subject' : 'hello world', 'body': 'this is a test', 'name': '07/23/17 hello world', 'comp' : [15,22], 'attr' : [50,60], 'cert' : [78, 90], 'auto' : true};
+// policy_dict['test2'] = {'ids': ['82','54'], 'subject' : 'hello world88', 'body': '888this is a te8st', 'name': '07/23/17 h8e8l8l8o world', 'comp' : [5,82], 'attr' : [50,80], 'cert' : [78, 80], 'auto' : false};
+
 
 var transporter = nodemailer.createTransport('smtps://' + gmailUsername + ':' + encodeURI(gmailPassword) + '@smtp.gmail.com');
 
@@ -93,15 +101,20 @@ router.route('/email')
     // get the ids for emails
     .post(function(req, res) {
         for (var j = 0; j < req.body.ids.length; j++) {
-          // console.log(req.body.ids[j]);
           var id = req.body.ids[j];
           if (id in anon_to_email) {
-            sendEmail(anon_to_email[id], req.body.subject, req.body.body, function (err) {
-                if (err) {
-                    console.log(err);
-                    console.log("email send failed");
+              if (!(id in policy_dict[req.body.name].ids) || !(policy_dict[req.body.name].auto)) {
+                var body = req.body.body;
+                body = body.replace('[:firstname:]', anon_to_email[id].first);
+                body = body.replace('[:lastname:]', anon_to_email[id].last);
+                body = body.replace('[:fullname:]', anon_to_email[id].first + " " + anon_to_email[id].last);
+                sendEmail(anon_to_email[id].email, req.body.subject, req.body.body, req.body.reply, function (err) {
+                    if (err) {
+                        console.log(err);
+                        console.log("email send failed");
+                    }
+                  });
                 }
-            });
           }
           else {
             continue;
@@ -110,12 +123,13 @@ router.route('/email')
         res.send('sent');
     });
 
-function sendEmail(email, subject, content, cb) {
+function sendEmail(email, subject, content, reply, cb) {
     var mailOptions = {
         from: gmailUsername, // sender address
         to: email, // list of receivers
         subject: subject, // Subject line
-        text: content // plaintext body
+        text: content, // plaintext body
+        replyTo: reply
     };
 
     // send mail with defined transport object
@@ -140,6 +154,16 @@ router.route('/predictions').get(function(req, res) {
 
 router.route('/policies').get(function(req, res) {
   res.json(policy_dict);
+});
+
+router.route('/save').post(function(req, res) {
+  policy_dict[req.body.name] = {'name':req.body.name, 'ids':req.body.ids, 'subject':req.body.subject, 'body':req.body.body, 'reply':req.body.reply, 'comp':req.body.comp, 'attr':req.body.attr, 'cert':req.body.cert, 'auto': req.body.auto, 'timestamp': req.body.timestamp};
+});
+
+router.route('/delete').post(function(req, res) {
+  var p = req.body.name;
+  delete policy_dict.p;
+  console.log(policy_dict);
 });
 
 // This route exists only for testing your password

@@ -254,8 +254,8 @@ aside {
 
   <form class="radios">
   <div>
-    <input type="radio" id="intRadio" name="type" value="intervention" checked="checked">Interventions
-    <input type="radio" id="annRadio" name="type" value="announcement">Announcements
+    <input type="radio" id="intRadio" name="type" value="intervention" checked="checked" style="width:50px; height:20px;">Interventions
+    <input type="radio" id="annRadio" name="type" value="announcement" style="width:50px; height:20px;">Announcements
   </div>
 </form>
 
@@ -270,7 +270,8 @@ aside {
 
   <div id="intervention" style="display:block;">
 
-    <h1>Student Intervention Selector</h1>
+    <h1 style="margin-bottom:0.5em;">Student Intervention Selector</h1>
+    <h2 id="policyName" style="display:none;">Policy Name<h2>
 
     <p>Some student groups to try:
       <button type="button" id="comp-no-pass">Complete But Not Pass</button>
@@ -292,48 +293,59 @@ aside {
     <aside id="totals"><span id="active">-</span> of <span id="total">-</span> students selected.</aside>
 
     <div id="lists">
-      <!-- <div id="student-list" class="list">
+      <div id="student-list" class="list" style="display:none;">
         <div>
           <div style="width:200px; display:inline-block">Anonymized Student ID</div>
           <div style="width:150px; display:inline-block">Completion %</div>
           <div style="width:150px; display:inline-block">Attrition %</div>
           <div style="width:150px; display:inline-block">Certification %</div>
       </div>
-    </div> -->
+    </div>
     </div>
 
-    <!-- Trigger/Open The Modal -->
-    <button id="myBtn">Save</button>
-
-    <!-- The Modal -->
-    <div id="myModal" class="modal">
-
-      <!-- Modal content -->
-      <div class="modal-content">
-        <span class="close">&times;</span>
-        <p>Some text in the Modal..</p>
-      </div>
-
-    </div>
-    <button type="button" id="delete" style="display:none;">Delete</button>
-    <button type="button" id="automated">Automated</button>
+    <button type="button" id="delete">Delete</button>
 
 </div>
 
-<div id="announcement" onloadedmetadata=""style="display:none;">
+<div id="announcement" onloadedmetadata="" style="display:none;">
   <h1>Student Announcements</h1>
 </div>
 
 <form style="border-style:solid; padding: 20px; margin-top:50px;">
+  <p>*Please check the maximum daily limit of your email provider. For example, Gmail is 500 per day.*</p>
+  <br>
   <h4>Email text</h4>
   <h6>Email Subject</h6>
   <input id="email-subject" type="text" value="Hello Students">
+  <h6>Reply To</h6>
+  <input id="reply-to" type="text" value="example@email.com">
   <h6>Email Body</h6>
   <textarea id="email-body" style="width:500px; height: 100px">Write your email here</textarea>
   <br>
   <br>
   <button type="button" id="emailButton">Send email to selected students</button>
+  <input id="automated" type="checkbox" style="margin-right: 10px; margin-left: 50px; display:inline"><p id="automated2" style="display:inline;">Automated<p>
 </form>
+
+<!-- Trigger/Open The Modal -->
+<!-- <button id="modalBtn">Save</button> -->
+
+<!-- The Modal -->
+<!-- <div id="myModal" class="modal"> -->
+
+  <!-- Modal content -->
+  <!-- <div class="modal-content">
+    <span class="close">&times;</span>
+    <form>
+      <h4>Name</h4>
+      <input id="policy-name" type="text" value="Policy Name">
+      <button type="button" id="policy-save">Save Policy</button>
+    </form>
+  </div> -->
+
+<!-- </div> -->
+<!-- <button type="button" id="delete" style="display:none;">Delete</button> -->
+<!-- <button type="button" id="automated">Automated</button> -->
 
 <script>
 
@@ -720,7 +732,9 @@ function send_emails () {
     {
       "ids": ids,
       "subject": $('#email-subject').attr('value'),
-      "body": $('#email-body').attr('value')
+      "body": $('#email-body').attr('value'),
+      "reply": $('#reply-to').attr('value'),
+      "name": date + $('#email-subject').attr('value')
     },
     success: function(response) {
       console.log("Successfully sent!");
@@ -752,41 +766,157 @@ window.onclick = function(event) {
 
 
 
-// Get the modal
-var modal = document.getElementById('myModal');
+// // Get the modal
+// var modal = document.getElementById('myModal');
+//
+// // Get the button that opens the modal
+// var btn = document.getElementById("myBtn");
+//
+// // Get the <span> element that closes the modal
+// var span = document.getElementsByClassName("close")[0];
+//
+// // When the user clicks on the button, open the modal
+// modalBtn.onclick = function() {
+//     modal.style.display = "block";
+// }
+//
+// // When the user clicks on <span> (x), close the modal
+// span.onclick = function() {
+//     modal.style.display = "none";
+// }
+//
+// // When the user clicks anywhere outside of the modal, close it
+// window.onclick = function(event) {
+//     if (event.target == modal) {
+//         modal.style.display = "none";
+//     }
+// }
 
-// Get the button that opens the modal
-var btn = document.getElementById("myBtn");
 
-// Get the <span> element that closes the modal
-var span = document.getElementsByClassName("close")[0];
 
-// When the user clicks on the button, open the modal
-btn.onclick = function() {
-    modal.style.display = "block";
-}
 
-// When the user clicks on <span> (x), close the modal
-span.onclick = function() {
-    modal.style.display = "none";
-}
+// Getting the policies
 
-// When the user clicks anywhere outside of the modal, close it
-window.onclick = function(event) {
-    if (event.target == modal) {
-        modal.style.display = "none";
+function get_policy () {
+var settings = {
+  "async": true,
+  "crossDomain": true,
+  "url": "https://cahl.berkeley.edu:1336/api/policies",
+  "method": "GET",
+  success: function(response) {
+    var items = Object.keys(response).map(function(key) {
+      return [key, dict[key].timestamp];
+    });
+    items.sort(function(first, second) {
+      return second[1] - first[1];
+    });
+    for (p in items) {
+      console.log('after');
+      var policy = document.createElement("p");
+      var text = document.createTextNode(response[p].name);
+      policy.appendChild(text);
+      policy.setAttribute("id", response[p].name);
+      policy.onclick = (function (response, p) {
+          return function () {
+            filter([response[p].comp, response[p].attr, response[p].cert]);
+            $('#email-subject').attr('value', response[p].subject);
+            $('#email-body').attr('value', response[p].body);
+            $('#reply-to').attr('value', response[p].reply);
+            $('#policyName').text(response[p].name);
+            $('#policyName').css('display', 'block');
+            if (response[p].auto) {
+              $('#automated').attr('checked', true);
+              $('#automated').attr('disabled', "disabled");
+            }
+          };
+      })(response, p);
+      document.getElementById('myDropdown').appendChild(policy);
     }
+  }
+};
+$.ajax(settings);
 }
 
+function send_policy () {
+
+
+  var comp = window.filterLimits["completion-chart"];
+  var attr = window.filterLimits["attrition-chart"];
+  var cert = window.filterLimits["certification-chart"];
+
+  var auto = ($('#automated').attr("checked") === "checked")
+
+  var settings = {
+    "async": true,
+    "crossDomain": true,
+    "url": "https://cahl.berkeley.edu:1336/api/save",
+    "method": "POST",
+    "data":
+    {
+      "ids": ids,
+      "subject": $('#email-subject').attr('value'),
+      "body": $('#email-body').attr('value'),
+      "reply": $('#reply-to').attr('value'),
+      "name": date + $('#email-subject').attr('value'),
+      "comp": comp,
+      "attr": attr,
+      "cert": cert,
+      "auto": auto,
+      "timestamp": today
+    },
+    success: function(response) {
+      console.log("Policy Successfully sent!");
+      alert("Policy Saved!");
+    }
+  };
+  $.ajax(settings);
+}
+
+
+function delete_policy () {
+  var settings = {
+    "async": true,
+    "crossDomain": true,
+    "url": "https://cahl.berkeley.edu:1336/api/delete",
+    "method": "POST",
+    "data":
+    {
+      "name": $('#policyName').attr('value'),
+    },
+    success: function(response) {
+      console.log("Policy Successfully Deleted!");
+    }
+  };
+  $.ajax(settings);
+}
+
+var today = new Date();
+var dd = today.getDate();
+var mm = today.getMonth()+1; //January is 0!
+var yyyy = today.getFullYear();
+
+if(dd<10) {
+    dd = '0'+dd
+}
+
+if(mm<10) {
+    mm = '0'+mm
+}
+
+var date = mm+dd+yyyy + "-";
+console.log(date);
+
+var ms = today.getTime();
 
 
 
 window.onload = function() {
-  // drawGraphs("https://chrisvle.github.io/studentPredictions.csv");
-  drawGraphs("https://cahl.berkeley.edu:1336/api/predictions")
+  drawGraphs("https://cahl.berkeley.edu:1336/api/predictions");
+  get_policy();
   $('#emailButton').on('click', function() {
     if (confirm("Are you sure you want to send this email to " + window.selectedStudents.length + " students?")) {
       getIDs(send_emails);
+      getIDs(send_policy);
     }
   });
   $('#comp-no-pass').on('click', function() {
@@ -798,15 +928,26 @@ window.onload = function() {
   $('#annRadio').on('click', function() {
     $('#intervention').css('display', 'none');
     $('#announcement').css('display', 'block');
+    $('#automated').css('display', 'none');
+    $('#automated2').css('display', 'none');
   });
   $('#intRadio').on('click', function() {
     $('#intervention').css('display', 'block');
+    // $('#modalBtn').css('display', 'block');
+    $('#automated').css('display', 'inline');
+    $('#automated2').css('display', 'inline');
+    $('#automated').attr('checked', false);
   });
   $('#test').on('click', function() {
-    var policy = document.createElement("p");
-    var text = document.createTextNode("New.");
-    policy.appendChild(text);
-    document.getElementById('myDropdown').appendChild(policy);
+    getIDs(send_policy);
+    get_policy();
+  });
+  $('#delete').on('click', function() {
+    delete_policy();
+    var toDelete = $('#policyName').text();
+    $('#' + toDelete).remove();
+    console.log(toDelete);
+    $('#policyName').text('');
   });
 };
 
