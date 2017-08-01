@@ -9,6 +9,11 @@ var nodemailer = require('nodemailer');
 var $ = jQuery = require('jquery');
 require(process.cwd() + '/jquery.csv.min.js');
 
+var Policy     = require('/app/models/policy');
+
+var mongoose   = require('mongoose');
+mongoose.connect('mongodb://cahl.berkeley.edu:1303/policies'); // ******put a /events after port to save into that db
+
 
 // NEED TO CHANGE MASTER to get actual, copy over
 var csvWeekly = '../MASTER_user_info.csv';  // change this to location of email csv
@@ -45,7 +50,7 @@ fs.readFile(index_csv, 'UTF-8', function(err, csv) {
 });
 
 // making policy dictionary
-var policy_dict = {};
+// var policy_dict = {};
 // policy_dict['test'] = {'ids': ['12','54'], 'subject' : 'hello world', 'body': 'this is a test', 'name': '07/23/17 hello world', 'comp' : [15,22], 'attr' : [50,60], 'cert' : [78, 90], 'auto' : true};
 // policy_dict['test2'] = {'ids': ['82','54'], 'subject' : 'hello world88', 'body': '888this is a te8st', 'name': '07/23/17 h8e8l8l8o world', 'comp' : [5,82], 'attr' : [50,80], 'cert' : [78, 80], 'auto' : false};
 
@@ -100,6 +105,7 @@ function checkCredentials(credentials) {
 router.route('/email')
     // get the ids for emails
     .post(function(req, res) {
+      if (req.body.pass === 'sadfvkn88asVLS891') {
         for (var j = 0; j < req.body.ids.length; j++) {
           var id = req.body.ids[j];
           if (id in anon_to_email) {
@@ -120,7 +126,13 @@ router.route('/email')
             continue;
           }
         }
+
         res.send('sent');
+      }
+      else {
+        res.send('Access Denied');
+        res.end('Access denied');
+      }
     });
 
 function sendEmail(email, subject, content, reply, cb) {
@@ -152,12 +164,46 @@ router.route('/predictions').get(function(req, res) {
   res.sendFile(csvDaily);
 });
 
-router.route('/policies').get(function(req, res) {
+router.route('/interventions').get(function(req, res) {
+  policy_dict = Policy.find({"intervention":"1"}).sort("timestamp").select({"_id": 0});
+  res.json(policy_dict);
+});
+
+router.route('/annoucement').get(function(req, res) {
+  policy_dict = Policy.find({"intervention":"0"}).sort("timestamp").select({"_id": 0});
   res.json(policy_dict);
 });
 
 router.route('/save').post(function(req, res) {
-  policy_dict[req.body.name] = {'name':req.body.name, 'ids':req.body.ids, 'subject':req.body.subject, 'body':req.body.body, 'reply':req.body.reply, 'comp':req.body.comp, 'attr':req.body.attr, 'cert':req.body.cert, 'auto': req.body.auto, 'timestamp': req.body.timestamp};
+  // policy_dict[req.body.name] = {'name':req.body.name, 'ids':req.body.ids, 'subject':req.body.subject, 'body':req.body.body, 'reply':req.body.reply, 'comp':req.body.comp, 'attr':req.body.attr, 'cert':req.body.cert, 'auto': req.body.auto, 'timestamp': req.body.timestamp};
+
+  var policy = new Policy();
+  if (req.body.intervention === '1') {
+    event.name = req.body.name;
+    event.ids = req.body.ids;
+    event.subject = req.body.subject;
+    event.body = req.body.body;
+    event.reply = req.body.reply;
+    event.comp = req.body.comp;
+    event.attr = req.body.attr;
+    event.cert = req.body.cert;
+    event.auto = req.body.auto;
+    event.timestamp = req.body.timestamp;
+    event.intervention = req.body.intervention;
+  }
+  else {
+    event.name = req.body.name;
+    event.ids = ''
+    event.subject = req.body.subject;
+    event.body = req.body.body;
+    event.reply = req.body.reply;
+    event.comp = [];
+    event.attr = [];
+    event.cert = [];
+    event.auto = 'false'
+    event.timestamp = req.body.timestamp;
+    event.intervention = req.body.intervention;
+  }
 });
 
 router.route('/delete').post(function(req, res) {

@@ -715,8 +715,10 @@ var ids;
 
 function getIDs(callback) {
   ids = [];
+  // ids = '';
   for (i = 0; i < $('.anon-student').length; i++) {
       ids.push($('.anon-student')[i].innerHTML);
+      // ids += ($('.anon-student')[i].innerHTML) + ' ';
   }
   console.log(ids);
   callback();
@@ -734,7 +736,8 @@ function send_emails () {
       "subject": $('#email-subject').attr('value'),
       "body": $('#email-body').attr('value'),
       "reply": $('#reply-to').attr('value'),
-      "name": date + $('#email-subject').attr('value')
+      "name": date + $('#email-subject').attr('value'),
+      "pass": "sadfvkn88asVLS891"
     },
     success: function(response) {
       console.log("Successfully sent!");
