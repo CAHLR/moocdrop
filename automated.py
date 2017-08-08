@@ -9,7 +9,7 @@ import requests
 url = "https://cahl.berkeley.edu:1336/api/email"
 
 # Adding csv to mongo
-csvfile = open('../new_prediction.csv', 'r')
+csvfile = open('test_pred.csv', 'r')
 reader = csv.DictReader(csvfile)
 mongo_client = MongoClient(host="localhost:1303", port=1303)
 db_pred = mongo_client.predictions
@@ -46,5 +46,5 @@ for p in cursor:
         if i['anon_user_id'] not in old_ids:
             updated = old_ids + [i['anon_user_id']]
             db_policy.policies.find_one_and_update({"_id": p['_id']}, {"$set": {"ids":updated}})
-            # data_to_send = {"pass": "sadfvkn88asVLS891", "ids": list(i['anon_user_id']), "body": p['body'], "subject": p['subject'], "reply": p['reply']}
-#             r = requests.post(url, data=data_to_send)
+            data_to_send = {"pass": "sadfvkn88asVLS891", "ids": list(i['anon_user_id']), "body": p['body'], "subject": p['subject'], "reply": p['reply']}
+            r = requests.post(url, data=data_to_send)
