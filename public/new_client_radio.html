@@ -800,11 +800,46 @@ window.onclick = function(event) {
 
 // Getting the policies
 
-function get_policy () {
+function get_interventions () {
 var settings = {
   "async": true,
   "crossDomain": true,
-  "url": "https://cahl.berkeley.edu:1336/api/policies",
+  "url": "https://cahl.berkeley.edu:1336/api/interventions",
+  "method": "GET",
+  success: function(response) {
+    for (p in response) {
+      console.log('after');
+      var policy = document.createElement("p");
+      var text = document.createTextNode(response[p].name);
+      policy.appendChild(text);
+      policy.setAttribute("id", response[p].name);
+      policy.onclick = (function (response, p) {
+          return function () {
+            filter([response[p].comp, response[p].attr, response[p].cert]);
+            $('#email-subject').attr('value', response[p].subject);
+            $('#email-body').attr('value', response[p].body);
+            $('#reply-to').attr('value', response[p].reply);
+            $('#policyName').text(response[p].name);
+            $('#policyName').css('display', 'block');
+            if (response[p].auto === "true") {
+              $('#automated').attr('checked', true);
+              $('#automated').attr('disabled', "disabled");
+            }
+          };
+      })(response, p);
+      document.getElementById('myDropdown').appendChild(policy);
+    }
+  }
+};
+$.ajax(settings);
+}
+
+
+function get_annoucements () {
+var settings = {
+  "async": true,
+  "crossDomain": true,
+  "url": "https://cahl.berkeley.edu:1336/api/announcements",
   "method": "GET",
   success: function(response) {
     var items = Object.keys(response).map(function(key) {
@@ -840,14 +875,15 @@ var settings = {
 $.ajax(settings);
 }
 
+
 function send_policy () {
-
-
   var comp = window.filterLimits["completion-chart"];
   var attr = window.filterLimits["attrition-chart"];
   var cert = window.filterLimits["certification-chart"];
 
-  var auto = ($('#automated').attr("checked") === "checked")
+  var automated = ($('#automated').attr("checked") === "checked")
+  console.log("automated: " + automated);
+  var intervention = ($('#intRadio').attr("checked") === "checked")
 
   var settings = {
     "async": true,
@@ -864,8 +900,9 @@ function send_policy () {
       "comp": comp,
       "attr": attr,
       "cert": cert,
-      "auto": auto,
-      "timestamp": today
+      "auto": automated,
+      "timestamp": today,
+      "intervention": intervention
     },
     success: function(response) {
       console.log("Policy Successfully sent!");
@@ -884,7 +921,7 @@ function delete_policy () {
     "method": "POST",
     "data":
     {
-      "name": $('#policyName').attr('value'),
+      "name": $('#policyName')[0].innerHTML
     },
     success: function(response) {
       console.log("Policy Successfully Deleted!");
@@ -915,7 +952,7 @@ var ms = today.getTime();
 
 window.onload = function() {
   drawGraphs("https://cahl.berkeley.edu:1336/api/predictions");
-  get_policy();
+  get_interventions();
   $('#emailButton').on('click', function() {
     if (confirm("Are you sure you want to send this email to " + window.selectedStudents.length + " students?")) {
       getIDs(send_emails);
@@ -943,7 +980,7 @@ window.onload = function() {
   });
   $('#test').on('click', function() {
     getIDs(send_policy);
-    get_policy();
+    // get_interventions();
   });
   $('#delete').on('click', function() {
     delete_policy();

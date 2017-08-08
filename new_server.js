@@ -9,7 +9,7 @@ var nodemailer = require('nodemailer');
 var $ = jQuery = require('jquery');
 require(process.cwd() + '/jquery.csv.min.js');
 
-var Policy     = require('/app/models/policy');
+var Policy     = require(process.cwd() + '/app/models/policy');
 
 var mongoose   = require('mongoose');
 mongoose.connect('mongodb://cahl.berkeley.edu:1303/policies'); // ******put a /events after port to save into that db
@@ -109,18 +109,16 @@ router.route('/email')
         for (var j = 0; j < req.body.ids.length; j++) {
           var id = req.body.ids[j];
           if (id in anon_to_email) {
-              if (!(id in policy_dict[req.body.name].ids) || !(policy_dict[req.body.name].auto)) {
-                var body = req.body.body;
-                body = body.replace('[:firstname:]', anon_to_email[id].first);
-                body = body.replace('[:lastname:]', anon_to_email[id].last);
-                body = body.replace('[:fullname:]', anon_to_email[id].first + " " + anon_to_email[id].last);
-                sendEmail(anon_to_email[id].email, req.body.subject, req.body.body, req.body.reply, function (err) {
-                    if (err) {
-                        console.log(err);
-                        console.log("email send failed");
-                    }
-                  });
-                }
+              var body = req.body.body;
+              body = body.replace('[:firstname:]', anon_to_email[id].first);
+              body = body.replace('[:lastname:]', anon_to_email[id].last);
+              body = body.replace('[:fullname:]', anon_to_email[id].first + " " + anon_to_email[id].last);
+              sendEmail(anon_to_email[id].email, req.body.subject, req.body.body, req.body.reply, function (err) {
+                  if (err) {
+                      console.log(err);
+                      console.log("email send failed");
+                  }
+                });
           }
           else {
             continue;
@@ -165,51 +163,60 @@ router.route('/predictions').get(function(req, res) {
 });
 
 router.route('/interventions').get(function(req, res) {
-  policy_dict = Policy.find({"intervention":"1"}).sort("timestamp").select({"_id": 0});
-  res.json(policy_dict);
+  query = Policy.find({"intervention": "true" }).sort("timestamp");
+
+  query.exec(function (err, output) {
+      if (err) {
+        return next(err);
+      }
+      else {
+        res.json(output);
+      }
+    });
 });
 
-router.route('/annoucement').get(function(req, res) {
-  policy_dict = Policy.find({"intervention":"0"}).sort("timestamp").select({"_id": 0});
+router.route('/announcements').get(function(req, res) {
+  policy_dict = Policy.find({"intervention":"false"}).sort({"timestamp":1});
   res.json(policy_dict);
 });
 
 router.route('/save').post(function(req, res) {
-  // policy_dict[req.body.name] = {'name':req.body.name, 'ids':req.body.ids, 'subject':req.body.subject, 'body':req.body.body, 'reply':req.body.reply, 'comp':req.body.comp, 'attr':req.body.attr, 'cert':req.body.cert, 'auto': req.body.auto, 'timestamp': req.body.timestamp};
-
   var policy = new Policy();
-  if (req.body.intervention === '1') {
-    event.name = req.body.name;
-    event.ids = req.body.ids;
-    event.subject = req.body.subject;
-    event.body = req.body.body;
-    event.reply = req.body.reply;
-    event.comp = req.body.comp;
-    event.attr = req.body.attr;
-    event.cert = req.body.cert;
-    event.auto = req.body.auto;
-    event.timestamp = req.body.timestamp;
-    event.intervention = req.body.intervention;
+  console.log(req.body.name, req.body.ids, req.body.subject, req.body.body, req.body.reply, req.body.comp, req.body.attr, req.body.cert, req.body.auto, req.body.timestamp, req.body.intervention);
+  if (req.body.intervention === 'true') {
+    policy.ids = req.body.ids;
+    policy.comp = req.body.comp;
+    policy.attr = req.body.attr;
+    policy.cert = req.body.cert;
+    policy.auto = req.body.auto;
   }
   else {
-    event.name = req.body.name;
-    event.ids = ''
-    event.subject = req.body.subject;
-    event.body = req.body.body;
-    event.reply = req.body.reply;
-    event.comp = [];
-    event.attr = [];
-    event.cert = [];
-    event.auto = 'false'
-    event.timestamp = req.body.timestamp;
-    event.intervention = req.body.intervention;
+    policy.ids = ''
+    policy.comp = [];
+    policy.attr = [];
+    policy.cert = [];
+    policy.auto = 'false'
   }
+  policy.name = req.body.name;
+  policy.subject = req.body.subject;
+  policy.body = req.body.body;
+  policy.reply = req.body.reply;
+  policy.timestamp = req.body.timestamp;
+  policy.intervention = req.body.intervention;
+
+  policy.save(function(err) {
+    if (err) {
+      console.log("error when saving policy");
+      res.end();
+      return;
+    }
+  });
 });
 
 router.route('/delete').post(function(req, res) {
-  var p = req.body.name;
-  delete policy_dict.p;
-  console.log(policy_dict);
+  console.log(req.body.name);
+  Policy.remove({"name":req.body.name}).exec();
+  res.json({ message: 'Successfully deleted' });
 });
 
 // This route exists only for testing your password
