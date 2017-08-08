@@ -31,7 +31,7 @@ var index_csv = csvWeekly;
 var anon_to_email = {};
 fs.readFile(index_csv, 'UTF-8', function(err, csv) {
   $.csv.toArrays(csv, {}, function(err, data) {
-    for(var i=1 , len=data.length; i<len; i++) {
+    for(var i=2 , len=data.length; i<len; i++) {
       console.log(data[i][1]);
       if (data[i][1]) {
           anon_to_email[data[i][6]] = {'email': data[i][2]};
