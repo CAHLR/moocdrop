@@ -30,7 +30,6 @@ db_policy = mongo_client.policies
 cursor = db_policy.policies.find({"intervention": "true", "auto": "true"})
 
 for p in cursor:
-    print(p)
     old_ids = p['ids']
 
     attr_low = float(p['attr'][0])
@@ -44,6 +43,7 @@ for p in cursor:
 
     for i in new_ids:
         if i['anon_user_id'] not in old_ids:
+            print(i)
             updated = old_ids + [i['anon_user_id']]
             db_policy.policies.find_one_and_update({"_id": p['_id']}, {"$set": {"ids":updated}})
             data_to_send = {"pass": "sadfvkn88asVLS891", "ids": list(i['anon_user_id']), "body": p['body'], "subject": p['subject'], "reply": p['reply']}

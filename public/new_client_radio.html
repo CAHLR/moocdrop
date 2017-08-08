@@ -252,15 +252,18 @@ aside {
 
 <div id="body">
 
+  <h1 style="margin-bottom:0.5em;">Communicator</h1>
+  <h3>Select recipients by:</h3>
+
   <form class="radios">
   <div>
-    <input type="radio" id="intRadio" name="type" value="intervention" checked="checked" style="width:50px; height:20px;">Interventions
-    <input type="radio" id="annRadio" name="type" value="announcement" style="width:50px; height:20px;">Announcements
+    <input type="radio" id="intRadio" name="type" value="intervention" checked="checked" style="width:50px; height:20px;">Analytics
+    <input type="radio" id="annRadio" name="type" value="announcement" style="width:50px; height:20px;">All Learners
   </div>
 </form>
 
 <div class="dropdown">
-  <button onclick="toggleDropdown()" class="dropbtn">Dropdown</button>
+  <button onclick="toggleDropdown()" class="dropbtn">Load Past Communications</button>
   <div id="myDropdown" class="dropdown-content">
     <p>Sample</p>
   </div>
@@ -270,12 +273,11 @@ aside {
 
   <div id="intervention" style="display:block;">
 
-    <h1 style="margin-bottom:0.5em;">Student Intervention Selector</h1>
     <h2 id="policyName" style="display:none;">Policy Name<h2>
 
-    <p>Some student groups to try:
-      <button type="button" id="comp-no-pass">Complete But Not Pass</button>
-      <button type="button" id="cert-drop-out">Certify But Drop Out</button>
+    <p>Learner selection groups to try:
+      <button type="button" id="comp-no-cert">Complete But No Certificate</button>
+      <button type="button" id="attr-no-comp-cert">Attrit But No Complete/Certificate</button>
     </p>
 
     <div id="charts">
@@ -290,7 +292,7 @@ aside {
       </div>
     </div>
 
-    <aside id="totals"><span id="active">-</span> of <span id="total">-</span> students selected.</aside>
+    <aside id="totals"><span id="active">-</span><span id="percentage"></span> of <span id="total">-</span> learners selected</aside>
 
     <div id="lists">
       <div id="student-list" class="list" style="display:none;">
@@ -303,7 +305,7 @@ aside {
     </div>
     </div>
 
-    <button type="button" id="delete">Delete</button>
+    <button type="button" id="delete" style="display:none">Delete</button>
 
 </div>
 
@@ -312,19 +314,20 @@ aside {
 </div>
 
 <form style="border-style:solid; padding: 20px; margin-top:50px;">
-  <p>*Please check the maximum daily limit of your email provider. For example, Gmail is 500 per day.*</p>
   <br>
-  <h4>Email text</h4>
-  <h6>Email Subject</h6>
-  <input id="email-subject" type="text" value="Hello Students">
+  <h4>Compose Email</h4>
+  <h6 id="recipients" style="font-family:Open-Sans; font-size:16px; font-weight:100;"></h6>
+  <input id="reply-to" type="text" placeholder="Instructor Email Address">
   <h6>Reply To</h6>
-  <input id="reply-to" type="text" value="example@email.com">
-  <h6>Email Body</h6>
-  <textarea id="email-body" style="width:500px; height: 100px">Write your email here</textarea>
+  <input id="email-subject" type="text" placeholder="Subject">
+  <h6>Subject</h6>
+  <textarea id="email-body" style="width:500px; height: 100px"></textarea>
+  <h6>Body</h6>
   <br>
   <br>
-  <button type="button" id="emailButton">Send email to selected students</button>
-  <input id="automated" type="checkbox" style="margin-right: 10px; margin-left: 50px; display:inline"><p id="automated2" style="display:inline;">Automated<p>
+  <button type="button" id="emailButton">Send email to selected learners</button>
+  <input id="automated" type="checkbox" style="margin-right: 10px; margin-left: 50px; display:inline"><p id="automated2" style="display:inline;">Automatically check for and send to new matches found daily<p>
+  <p>*Please check the maximum daily recipient limit of your email provider. For example, Gmail is 500 per day.*</p>
 </form>
 
 <!-- Trigger/Open The Modal -->
@@ -440,6 +443,8 @@ function loadData(error, students) {
     chart.each(render);
     list.each(render);
     d3.select("#active").text(formatNumber(all.value()));
+    d3.select("#percentage").text(" (%" + formatNumber(Math.round(all.value() * 100.0 / student.size())) + ")");
+    d3.select("#recipients").text("Recipients: " + formatNumber(all.value()) + " Learners");
   }
 
   // Like d3.time.format, but faster.
@@ -824,6 +829,7 @@ var settings = {
             if (response[p].auto === "true") {
               $('#automated').attr('checked', true);
               $('#automated').attr('disabled', "disabled");
+              $('#delete').css('display', 'inline-block');
             }
           };
       })(response, p);
@@ -835,7 +841,7 @@ $.ajax(settings);
 }
 
 
-function get_annoucements () {
+function get_announcements () {
 var settings = {
   "async": true,
   "crossDomain": true,
@@ -959,11 +965,11 @@ window.onload = function() {
       getIDs(send_policy);
     }
   });
-  $('#comp-no-pass').on('click', function() {
-    filter([[80, 100], null, [0, 30]]);
+  $('#comp-no-cert').on('click', function() {
+    filter([[80, 100], null, [0, 20]]);
   });
-  $('#cert-drop-out').on('click', function() {
-    filter([null, [50, 100], [40, 100]])
+  $('#attr-no-comp-cert').on('click', function() {
+    filter([[0,70], [80, 100], [0, 70]])
   });
   $('#annRadio').on('click', function() {
     $('#intervention').css('display', 'none');
