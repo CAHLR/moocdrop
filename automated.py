@@ -7,6 +7,7 @@ from pymongo import MongoClient
 import requests
 
 url = "https://cahl.berkeley.edu:1336/api/email"
+headers = {'Content-Type': 'application/json', 'Accept':'application/json'}
 
 # Adding csv to mongo
 csvfile = open('test_pred.csv', 'r')
@@ -46,5 +47,5 @@ for p in cursor:
             print(i)
             updated = old_ids + [i['anon_user_id']]
             db_policy.policies.find_one_and_update({"_id": p['_id']}, {"$set": {"ids":updated}})
-            data_to_send = {"pass": "sadfvkn88asVLS891", "ids": list(i['anon_user_id']), "body": p['body'], "subject": p['subject'], "reply": p['reply']}
-            r = requests.post(url, data=data_to_send)
+            data_to_send = {"pass": "sadfvkn88asVLS891", "ids": [i['anon_user_id']], "body": p['body'], "subject": p['subject'], "reply": p['reply']}
+            r = requests.post(url, data=json.dumps(data_to_send), headers=headers)

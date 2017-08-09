@@ -80,6 +80,7 @@ new_master_df = new_master_df.dropna(axis=0, subset=['anon_user_id'])
 
 
 header = ["anon_user_id", "attrition_prediction", "completion_prediction", "certification_prediction"]
-new_master_df.to_csv('new_prediction.csv', index=False, columns = header)
-print ("Updated predictions at prediction.csv")
+without_counter = new_master_df.ix[1:]
+without_counter.to_csv('new_prediction.csv', index=False, columns = header)
+print ("Updated predictions at new_prediction.csv")
 sys.exit()

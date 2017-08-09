@@ -11,6 +11,7 @@
   ],
   "watch":[
     "/new_server.js",
-    "/automated.py"
+    "/automated.py",
+    "/test_pred.csv"
   ]
 }

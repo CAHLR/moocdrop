@@ -31,17 +31,19 @@ var secretPassword = 'secret'; // change: must be shared with client.html
 // making anonID to email dict
 var index_csv = csvWeekly;
 var anon_to_email = {};
+var all_ids = [];
 fs.readFile(index_csv, 'UTF-8', function(err, csv) {
   $.csv.toArrays(csv, {}, function(err, data) {
-    for(var i=2 , len=data.length; i<len; i++) {
+    for(var i=2, len=data.length; i<len; i++) {
       console.log(data[i][1]);
-      if (data[i][1]) {
-          anon_to_email[data[i][6]] = {'email': data[i][2]};
-          if (data[i][3]) {
-            anon_to_email[data[i][6]]['first'] = data[i][3];
-          }
+      if (data[i][3]) {
+          all_ids.push(data[i][1]);
+          anon_to_email[data[i][1]] = {'email': data[i][3]};
           if (data[i][4]) {
-            anon_to_email[data[i][6]]['last'] = data[i][4];
+            anon_to_email[data[i][1]]['first'] = data[i][4];
+          }
+          if (data[i][5]) {
+            anon_to_email[data[i][1]]['last'] = data[i][5];
           }
       }
       else {
@@ -107,22 +109,33 @@ function checkCredentials(credentials) {
 router.route('/email')
     // get the ids for emails
     .post(function(req, res) {
+      console.log("I made it to email");
+      console.log(anon_to_email);
       if (req.body.pass === 'sadfvkn88asVLS891') {
-        for (var j = 0; j < req.body.ids.length; j++) {
+        var ids = req.body.ids;
+        if (req.body.ann === 'true') {
+          ids = all_ids;
+        }
+        for (var j = 0; j < ids.length; j++) {
+          console.log("1");
           var id = req.body.ids[j];
+          console.log(id);
           if (id in anon_to_email) {
+            console.log("2");
               var body = req.body.body;
               body = body.replace('[:firstname:]', anon_to_email[id].first);
               body = body.replace('[:lastname:]', anon_to_email[id].last);
               body = body.replace('[:fullname:]', anon_to_email[id].first + " " + anon_to_email[id].last);
               sendEmail(anon_to_email[id].email, req.body.subject, req.body.body, req.body.reply, function (err) {
                   if (err) {
+                    console.log("3");
                       console.log(err);
                       console.log("email send failed");
                   }
                 });
           }
           else {
+            console.log("4");
             continue;
           }
         }
@@ -178,8 +191,17 @@ router.route('/interventions').get(function(req, res) {
 });
 
 router.route('/announcements').get(function(req, res) {
-  policy_dict = Policy.find({"intervention":"false"}).sort({"timestamp":1});
-  res.json(policy_dict);
+  console.log(all_ids);
+  query = Policy.find({"intervention": "false" }).sort("timestamp");
+
+  query.exec(function (err, output) {
+      if (err) {
+        return next(err);
+      }
+      else {
+        res.json(output);
+      }
+    });
 });
 
 router.route('/save').post(function(req, res) {
@@ -215,10 +237,10 @@ router.route('/save').post(function(req, res) {
   });
 });
 
-router.route('/delete').post(function(req, res) {
+router.route('/stop').post(function(req, res) {
   console.log(req.body.name);
-  Policy.remove({"name":req.body.name}).exec();
-  res.json({ message: 'Successfully deleted' });
+  Policy.update({"name": req.body.name}, {"$set": {"auto": "false"}}).exec();
+  res.json({ message: 'Successfully stopped' });
 });
 
 // This route exists only for testing your password

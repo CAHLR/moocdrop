@@ -208,27 +208,27 @@ aside {
 
 
 /* The Modal (background) */
-.modal {
-    display: none; /* Hidden by default */
-    position: fixed; /* Stay in place */
-    z-index: 1; /* Sit on top */
+/*.modal {
+    display: none;
+    position: fixed;
+    z-index: 1;
     left: 0;
     top: 0;
-    width: 100%; /* Full width */
-    height: 100%; /* Full height */
-    overflow: auto; /* Enable scroll if needed */
-    background-color: rgb(0,0,0); /* Fallback color */
-    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
-}
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgb(0,0,0);
+    background-color: rgba(0,0,0,0.4);
+}*/
 
 /* Modal Content/Box */
-.modal-content {
+/*.modal-content {
     background-color: #fefefe;
-    margin: 15% auto; /* 15% from the top and centered */
+    margin: 15% auto;
     padding: 20px;
     border: 1px solid #888;
-    width: 30%; /* Could be more or less, depending on screen size */
-}
+    width: 30%;
+}*/
 
 /* The Close Button */
 .close {
@@ -246,6 +246,32 @@ aside {
 }
 
 
+/* Tooltip container */
+.tooltip {
+    position: relative;
+    display: inline-block;
+    border-bottom: 1px dotted black; /* If you want dots under the hoverable text */
+}
+
+/* Tooltip text */
+.tooltip .tooltiptext {
+    visibility: hidden;
+    width: 120px;
+    background-color: black;
+    color: #fff;
+    text-align: center;
+    padding: 5px 0;
+    border-radius: 6px;
+
+    /* Position the tooltip text - see examples below! */
+    position: absolute;
+    z-index: 1;
+}
+
+/* Show the tooltip text when you mouse over the tooltip container */
+.tooltip:hover .tooltiptext {
+    visibility: visible;
+}
 
 
 </style>
@@ -270,6 +296,7 @@ aside {
 </div>
 
 <button type="button" id="test">Test</button>
+<button type="button" id="test2">Test2</button>
 
   <div id="intervention" style="display:block;">
 
@@ -305,18 +332,15 @@ aside {
     </div>
     </div>
 
-    <button type="button" id="delete" style="display:none">Delete</button>
+    <button title="This button will stop the automatic check and send for new matches. Please create a new communication for automated functionality." type="button" id="stopBtn" style="display:none">Stop Automation</button>
 
-</div>
-
-<div id="announcement" onloadedmetadata="" style="display:none;">
-  <h1>Student Announcements</h1>
 </div>
 
 <form style="border-style:solid; padding: 20px; margin-top:50px;">
   <br>
   <h4>Compose Email</h4>
   <h6 id="recipients" style="font-family:Open-Sans; font-size:16px; font-weight:100;"></h6>
+  <h6 id="all-recipients" style="font-family:Open-Sans; font-size:16px; font-weight:100;display:none;"></h6>
   <input id="reply-to" type="text" placeholder="Instructor Email Address">
   <h6>Reply To</h6>
   <input id="email-subject" type="text" placeholder="Subject">
@@ -326,7 +350,7 @@ aside {
   <br>
   <br>
   <button type="button" id="emailButton">Send email to selected learners</button>
-  <input id="automated" type="checkbox" style="margin-right: 10px; margin-left: 50px; display:inline"><p id="automated2" style="display:inline;">Automatically check for and send to new matches found daily<p>
+  <input id="automated" type="checkbox" style="margin-right: 10px; margin-left: 50px; display:inline; width:16px; height:16px"><p id="automated2" style="display:inline;">Automatically check for and send to new matches found daily<p>
   <p>*Please check the maximum daily recipient limit of your email provider. For example, Gmail is 500 per day.*</p>
 </form>
 
@@ -347,7 +371,7 @@ aside {
   </div> -->
 
 <!-- </div> -->
-<!-- <button type="button" id="delete" style="display:none;">Delete</button> -->
+<!-- <button type="button" id="stopBtn" style="display:none;">Delete</button> -->
 <!-- <button type="button" id="automated">Automated</button> -->
 
 <script>
@@ -432,6 +456,9 @@ function loadData(error, students) {
       .text(formatNumber(student.size()));
 
   renderAll();
+
+  // make all learners receipients always be all students
+  d3.select("#all-recipients").text("Recipients: " + formatNumber(student.size()) + " Learners");
 
   // Renders the specified chart or list.
   function render(method) {
@@ -730,6 +757,7 @@ function getIDs(callback) {
 }
 
 function send_emails () {
+  var ann = ($('#annRadio').attr("checked") === "checked");
   var settings = {
     "async": true,
     "crossDomain": true,
@@ -742,7 +770,8 @@ function send_emails () {
       "body": $('#email-body').attr('value'),
       "reply": $('#reply-to').attr('value'),
       "name": date + $('#email-subject').attr('value'),
-      "pass": "sadfvkn88asVLS891"
+      "pass": "sadfvkn88asVLS891",
+      "ann": ann
     },
     success: function(response) {
       console.log("Successfully sent!");
@@ -773,38 +802,6 @@ window.onclick = function(event) {
 
 
 
-
-// // Get the modal
-// var modal = document.getElementById('myModal');
-//
-// // Get the button that opens the modal
-// var btn = document.getElementById("myBtn");
-//
-// // Get the <span> element that closes the modal
-// var span = document.getElementsByClassName("close")[0];
-//
-// // When the user clicks on the button, open the modal
-// modalBtn.onclick = function() {
-//     modal.style.display = "block";
-// }
-//
-// // When the user clicks on <span> (x), close the modal
-// span.onclick = function() {
-//     modal.style.display = "none";
-// }
-//
-// // When the user clicks anywhere outside of the modal, close it
-// window.onclick = function(event) {
-//     if (event.target == modal) {
-//         modal.style.display = "none";
-//     }
-// }
-
-
-
-
-// Getting the policies
-
 function get_interventions () {
 var settings = {
   "async": true,
@@ -812,12 +809,24 @@ var settings = {
   "url": "https://cahl.berkeley.edu:1336/api/interventions",
   "method": "GET",
   success: function(response) {
+    document.getElementById('myDropdown').innerHTML = '';
     for (p in response) {
       console.log('after');
       var policy = document.createElement("p");
-      var text = document.createTextNode(response[p].name);
-      policy.appendChild(text);
+      var formatted_date = new Date(response[p].timestamp).toDateString().split(" ")
+      var final_display = formatted_date[1] + " " + formatted_date[2] + " " + formatted_date[3] + "<br>" + response[p].name;
+      if (response[p].auto === "true") {
+        final_display = "(Active)" + "<br>" + final_display
+        policy.setAttribute("style", "background:maroon;color:white");
+      }
+
+      // var text = document.createTextNode(final_display);
+      policy.innerHTML = final_display;
+      // policy.appendChild(text);
       policy.setAttribute("id", response[p].name);
+
+
+
       policy.onclick = (function (response, p) {
           return function () {
             filter([response[p].comp, response[p].attr, response[p].cert]);
@@ -828,8 +837,7 @@ var settings = {
             $('#policyName').css('display', 'block');
             if (response[p].auto === "true") {
               $('#automated').attr('checked', true);
-              $('#automated').attr('disabled', "disabled");
-              $('#delete').css('display', 'inline-block');
+              $('#stopBtn').css('display', 'inline-block');
             }
           };
       })(response, p);
@@ -841,6 +849,7 @@ $.ajax(settings);
 }
 
 
+
 function get_announcements () {
 var settings = {
   "async": true,
@@ -848,17 +857,15 @@ var settings = {
   "url": "https://cahl.berkeley.edu:1336/api/announcements",
   "method": "GET",
   success: function(response) {
-    var items = Object.keys(response).map(function(key) {
-      return [key, dict[key].timestamp];
-    });
-    items.sort(function(first, second) {
-      return second[1] - first[1];
-    });
-    for (p in items) {
-      console.log('after');
+    document.getElementById('myDropdown').innerHTML = '';
+    for (p in response) {
+      console.log(p);
       var policy = document.createElement("p");
-      var text = document.createTextNode(response[p].name);
-      policy.appendChild(text);
+      var formatted_date = new Date(response[p].timestamp).toDateString().split(" ")
+      var final_display = formatted_date[1] + " " + formatted_date[2] + " " + formatted_date[3] + "<br>" + response[p].name;
+      policy.innerHTML = final_display;
+      // var text = document.createTextNode(final_display)
+      // policy.appendChild(text);
       policy.setAttribute("id", response[p].name);
       policy.onclick = (function (response, p) {
           return function () {
@@ -868,10 +875,6 @@ var settings = {
             $('#reply-to').attr('value', response[p].reply);
             $('#policyName').text(response[p].name);
             $('#policyName').css('display', 'block');
-            if (response[p].auto) {
-              $('#automated').attr('checked', true);
-              $('#automated').attr('disabled', "disabled");
-            }
           };
       })(response, p);
       document.getElementById('myDropdown').appendChild(policy);
@@ -902,12 +905,12 @@ function send_policy () {
       "subject": $('#email-subject').attr('value'),
       "body": $('#email-body').attr('value'),
       "reply": $('#reply-to').attr('value'),
-      "name": date + $('#email-subject').attr('value'),
+      "name": $('#email-subject').attr('value'),
       "comp": comp,
       "attr": attr,
       "cert": cert,
       "auto": automated,
-      "timestamp": today,
+      "timestamp": date,
       "intervention": intervention
     },
     success: function(response) {
@@ -919,50 +922,42 @@ function send_policy () {
 }
 
 
-function delete_policy () {
+function stop_policy () {
   var settings = {
     "async": true,
     "crossDomain": true,
-    "url": "https://cahl.berkeley.edu:1336/api/delete",
+    "url": "https://cahl.berkeley.edu:1336/api/stop",
     "method": "POST",
     "data":
     {
       "name": $('#policyName')[0].innerHTML
     },
     success: function(response) {
-      console.log("Policy Successfully Deleted!");
+      console.log("Policy Successfully Stopped!");
     }
   };
   $.ajax(settings);
 }
 
-var today = new Date();
-var dd = today.getDate();
-var mm = today.getMonth()+1; //January is 0!
-var yyyy = today.getFullYear();
-
-if(dd<10) {
-    dd = '0'+dd
-}
-
-if(mm<10) {
-    mm = '0'+mm
-}
-
-var date = mm+dd+yyyy + "-";
+var date = new Date().toISOString();
 console.log(date);
-
-var ms = today.getTime();
-
-
 
 window.onload = function() {
   drawGraphs("https://cahl.berkeley.edu:1336/api/predictions");
+  $('#myDropdown').empty();
   get_interventions();
   $('#emailButton').on('click', function() {
-    if (confirm("Are you sure you want to send this email to " + window.selectedStudents.length + " students?")) {
-      getIDs(send_emails);
-      getIDs(send_policy);
+    if ($('#intRadio').attr("checked") === "checked") {
+      if (confirm("Are you sure you want to send this email to " + window.selectedStudents.length + " students?")) {
+        getIDs(send_emails);
+        getIDs(send_policy);
+      }
+    }
+    else {
+      if (confirm("Are you sure you want to send this email to " + $('#total')[0].innerHTML + " students?")) {
+        getIDs(send_emails);
+        getIDs(send_policy);
+      }
     }
   });
   $('#comp-no-cert').on('click', function() {
@@ -972,24 +967,35 @@ window.onload = function() {
     filter([[0,70], [80, 100], [0, 70]])
   });
   $('#annRadio').on('click', function() {
+    $('#myDropdown').empty();
+    get_announcements();
     $('#intervention').css('display', 'none');
-    $('#announcement').css('display', 'block');
     $('#automated').css('display', 'none');
     $('#automated2').css('display', 'none');
+    $('#all-recipients').css('display', 'block');
+    $('#recipients').css('display', 'none');
   });
   $('#intRadio').on('click', function() {
+    $('#myDropdown').empty();
+    get_interventions();
     $('#intervention').css('display', 'block');
     // $('#modalBtn').css('display', 'block');
     $('#automated').css('display', 'inline');
     $('#automated2').css('display', 'inline');
     $('#automated').attr('checked', false);
+    $('#all-recipients').css('display', 'none');
+    $('#recipients').css('display', 'block');
   });
   $('#test').on('click', function() {
     getIDs(send_policy);
-    // get_interventions();
+    get_announcements();
   });
-  $('#delete').on('click', function() {
-    delete_policy();
+  $('#test2').on('click', function() {
+    getIDs(send_policy);
+    get_interventions();
+  });
+  $('#stopBtn').on('click', function() {
+    stop_policy();
     var toDelete = $('#policyName').text();
     $('#' + toDelete).remove();
     console.log(toDelete);
