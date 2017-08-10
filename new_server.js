@@ -109,16 +109,18 @@ function checkCredentials(credentials) {
 router.route('/email')
     // get the ids for emails
     .post(function(req, res) {
-      console.log("I made it to email");
-      console.log(anon_to_email);
+      // console.log("I made it to email");
+      // console.log(anon_to_email);
       if (req.body.pass === 'sadfvkn88asVLS891') {
         var ids = req.body.ids;
         if (req.body.ann === 'true') {
           ids = all_ids;
         }
+        console.log(ids);
         for (var j = 0; j < ids.length; j++) {
           console.log("1");
-          var id = req.body.ids[j];
+          var id = ids[j];
+          console.log('afer 1')
           console.log(id);
           if (id in anon_to_email) {
             console.log("2");
