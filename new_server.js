@@ -35,7 +35,6 @@ var all_ids = [];
 fs.readFile(index_csv, 'UTF-8', function(err, csv) {
   $.csv.toArrays(csv, {}, function(err, data) {
     for(var i=2, len=data.length; i<len; i++) {
-      console.log(data[i][1]);
       if (data[i][3]) {
           all_ids.push(data[i][1]);
           anon_to_email[data[i][1]] = {'email': data[i][3]};
@@ -109,35 +108,28 @@ function checkCredentials(credentials) {
 router.route('/email')
     // get the ids for emails
     .post(function(req, res) {
-      // console.log("I made it to email");
-      // console.log(anon_to_email);
       if (req.body.pass === 'sadfvkn88asVLS891') {
         var ids = req.body.ids;
         if (req.body.ann === 'true') {
           ids = all_ids;
         }
-        console.log(ids);
         for (var j = 0; j < ids.length; j++) {
-          console.log("1");
           var id = ids[j];
-          console.log('afer 1')
-          console.log(id);
           if (id in anon_to_email) {
-            console.log("2");
               var body = req.body.body;
-              body = body.replace('[:firstname:]', anon_to_email[id].first);
-              body = body.replace('[:lastname:]', anon_to_email[id].last);
-              body = body.replace('[:fullname:]', anon_to_email[id].first + " " + anon_to_email[id].last);
+              console.log(anon_to_email);
+              console.log(anon_to_email[id]['first'], anon_to_email[id]['last']);
+              body = body.replace('[:firstname:]', anon_to_email[id]['first']);
+              body = body.replace('[:lastname:]', anon_to_email[id]['last']);
+              body = body.replace('[:fullname:]', anon_to_email[id]['first'] + " " + anon_to_email[id]['last']);
               sendEmail(anon_to_email[id].email, req.body.subject, req.body.body, req.body.reply, function (err) {
                   if (err) {
-                    console.log("3");
                       console.log(err);
                       console.log("email send failed");
                   }
                 });
           }
           else {
-            console.log("4");
             continue;
           }
         }
@@ -193,7 +185,6 @@ router.route('/interventions').get(function(req, res) {
 });
 
 router.route('/announcements').get(function(req, res) {
-  console.log(all_ids);
   query = Policy.find({"intervention": "false" }).sort("timestamp");
 
   query.exec(function (err, output) {
@@ -208,7 +199,6 @@ router.route('/announcements').get(function(req, res) {
 
 router.route('/save').post(function(req, res) {
   var policy = new Policy();
-  console.log(req.body.name, req.body.ids, req.body.subject, req.body.body, req.body.reply, req.body.comp, req.body.attr, req.body.cert, req.body.auto, req.body.timestamp, req.body.intervention);
   if (req.body.intervention === 'true') {
     policy.ids = req.body.ids;
     policy.comp = req.body.comp;
@@ -240,7 +230,6 @@ router.route('/save').post(function(req, res) {
 });
 
 router.route('/stop').post(function(req, res) {
-  console.log(req.body.name);
   Policy.update({"name": req.body.name}, {"$set": {"auto": "false"}}).exec();
   res.json({ message: 'Successfully stopped' });
 });
