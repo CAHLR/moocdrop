@@ -289,14 +289,13 @@ aside {
 </form>
 
 <div class="dropdown">
-  <button onclick="toggleDropdown()" class="dropbtn">Load Past Communications</button>
-  <div id="myDropdown" class="dropdown-content">
-    <p>Sample</p>
+  <button onclick="toggleDropdown()" class="dropbtn" style="width:165px;">Load Past Communications</button>
+  <div id="myDropdown" class="dropdown-content" style="height:300px; overflow:scroll;">
   </div>
 </div>
 
-<button type="button" id="test">Test</button>
-<button type="button" id="test2">Test2</button>
+<!-- <button type="button" id="test">Test</button> -->
+<!-- <button type="button" id="test2">Test2</button> -->
 
   <div id="intervention" style="display:block;">
 
@@ -819,7 +818,6 @@ var settings = {
         final_display = "(Active)" + "<br>" + final_display
         policy.setAttribute("style", "background:maroon;color:white");
       }
-
       // var text = document.createTextNode(final_display);
       policy.innerHTML = final_display;
       // policy.appendChild(text);

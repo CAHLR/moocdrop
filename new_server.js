@@ -34,7 +34,7 @@ var anon_to_email = {};
 var all_ids = [];
 fs.readFile(index_csv, 'UTF-8', function(err, csv) {
   $.csv.toArrays(csv, {}, function(err, data) {
-    for(var i=2, len=data.length; i<len; i++) {
+    for(var i=1, len=data.length; i<len; i++) {
       if (data[i][3]) {
           all_ids.push(data[i][1]);
           anon_to_email[data[i][1]] = {'email': data[i][3]};
@@ -116,13 +116,14 @@ router.route('/email')
         for (var j = 0; j < ids.length; j++) {
           var id = ids[j];
           if (id in anon_to_email) {
-              var body = req.body.body;
+              var message_body = req.body.body;
               console.log(anon_to_email);
               console.log(anon_to_email[id]['first'], anon_to_email[id]['last']);
-              body = body.replace('[:firstname:]', anon_to_email[id]['first']);
-              body = body.replace('[:lastname:]', anon_to_email[id]['last']);
-              body = body.replace('[:fullname:]', anon_to_email[id]['first'] + " " + anon_to_email[id]['last']);
-              sendEmail(anon_to_email[id].email, req.body.subject, req.body.body, req.body.reply, function (err) {
+              message_body = message_body.replace('[:firstname:]', anon_to_email[id]['first']);
+              message_body = message_body.replace('[:lastname:]', anon_to_email[id]['last']);
+              message_body = message_body.replace('[:fullname:]', anon_to_email[id]['first'] + " " + anon_to_email[id]['last']);
+              console.log(message_body);
+              sendEmail(anon_to_email[id].email, req.body.subject, message_body, req.body.reply, function (err) {
                   if (err) {
                       console.log(err);
                       console.log("email send failed");
