@@ -182,7 +182,7 @@ router.route('/predictions').get(function(req, res) {
 });
 
 router.route('/interventions').get(function(req, res) {
-  query = Policy.find({"intervention": "true" }).sort("timestamp");
+  query = Policy.find({"intervention": "true" }).sort({"timestamp": -1});
 
   query.exec(function (err, output) {
       if (err) {
@@ -195,7 +195,7 @@ router.route('/interventions').get(function(req, res) {
 });
 
 router.route('/announcements').get(function(req, res) {
-  query = Policy.find({"intervention": "false" }).sort("timestamp");
+  query = Policy.find({"intervention": "false" }).sort({"timestamp" : -1});
 
   query.exec(function (err, output) {
       if (err) {

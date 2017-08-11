@@ -11,7 +11,7 @@ var PolicySchema   = new Schema({
     attr: Array, // could be changed
     cert: Array, // could be changed
     auto: String,
-    timestamp: String,
+    timestamp: Date,
     intervention: String
 });
 

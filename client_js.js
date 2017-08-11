@@ -1,380 +1,3 @@
-<script src="/static/d3.js" defer></script>
-<script src="/static/crossfilter.js" defer></script>
-
-<meta charset="utf-8">
-<style>
-
-@import url(https://fonts.googleapis.com/css?family=Yanone+Kaffeesatz:400,700);
-
-body {
-  font-family: "Helvetica Neue";
-  margin: 40px auto;
-  width: 100%;
-}
-
-#body {
-  position: relative;
-}
-
-button {
-  background-color: lightBlue;
-  cursor: pointer;
-}
-
-button:disabled {
-  background-color: white;
-  cursor: auto;
-}
-
-footer {
-  padding: 2em 0 1em 0;
-  font-size: 12px;
-}
-
-h1 {
-  font-size: 96px;
-  margin-top: .3em;
-  margin-bottom: 0;
-}
-
-h1 + h2 {
-  margin-top: 0;
-}
-
-h2 {
-  font-weight: 400;
-  font-size: 28px;
-}
-
-h1, h2 {
-  font-family: "Yanone Kaffeesatz";
-  text-rendering: optimizeLegibility;
-}
-
-#body > p {
-  line-height: 1.5em;
-  width: 640px;
-  text-rendering: optimizeLegibility;
-}
-
-#charts {
-  padding: 10px 0;
-}
-
-.chart {
-  display: inline-block;
-  height: 151px;
-  margin-bottom: 20px;
-}
-
-.reset {
-  padding-left: 1em;
-  font-size: smaller;
-  color: #ccc;
-}
-
-.background.bar {
-  fill: #ccc;
-}
-
-.foreground.bar {
-  fill: steelblue;
-}
-
-.axis path, .axis line {
-  fill: none;
-  stroke: #000;
-  shape-rendering: crispEdges;
-}
-
-.axis text {
-  font: 10px sans-serif;
-}
-
-.brush rect.extent {
-  fill: steelblue;
-  fill-opacity: .125;
-}
-
-.brush .resize path {
-  fill: #eee;
-  stroke: #666;
-}
-
-#completion-chart {
-  width: 920px;
-}
-
-#attrition-chart {
-  width: 920px;
-}
-
-#certification-chart {
-  width: 920px;
-}
-
-#date-chart {
-  width: 920px;
-}
-
-#student-list .all-students {
-  height: 200px;
-  overflow-y:scroll;
-}
-
-#student-list .all-students,
-#student-list .day {
-  margin-bottom: .4em;
-}
-
-#student-list .student {
-  line-height: 1.5em;
-  background: #eee;
-  width: 650px;
-  margin-bottom: 1px;
-}
-
-#student-list .student div {
-  display: inline-block;
-  width: 100px;
-  /*text-align: center;*/
-  padding-left: 50px;
-}
-
-#student-list div.anon-student {
-  color: #999;
-  width: 150px;
-}
-
-#student-list .early {
-  color: green;
-}
-
-aside {
-  font-size: smaller;
-  float:right;
-}
-
-.radios {
-  padding-bottom: 20px;
-}
-
-/* Dropdown Button */
-.dropbtn {
-    background-color: #4CAF50;
-    color: white;
-    padding: 16px;
-    font-size: 16px;
-    border: none;
-    cursor: pointer;
-}
-
-/* Dropdown button on hover & focus */
-.dropbtn:hover, .dropbtn:focus {
-    background-color: #3e8e41;
-}
-
-/* The container <div> - needed to position the dropdown content */
-.dropdown {
-    position: relative;
-    display: inline-block;
-    float:right;
-}
-
-/* Dropdown Content (Hidden by Default) */
-.dropdown-content {
-    display: none;
-    position: absolute;
-    background-color: #f9f9f9;
-    min-width: 160px;
-    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-    z-index: 1;
-}
-
-/* Links inside the dropdown */
-.dropdown-content p {
-    color: black;
-    padding: 12px 16px;
-    text-decoration: none;
-    display: block;
-}
-
-/* Change color of dropdown links on hover */
-.dropdown-content p:hover {background-color: #f1f1f1}
-
-/* Show the dropdown menu (use JS to add this class to the .dropdown-content container when the user clicks on the dropdown button) */
-.show {display:block;}
-
-
-
-/* The Modal (background) */
-/*.modal {
-    display: none;
-    position: fixed;
-    z-index: 1;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-    background-color: rgb(0,0,0);
-    background-color: rgba(0,0,0,0.4);
-}*/
-
-/* Modal Content/Box */
-/*.modal-content {
-    background-color: #fefefe;
-    margin: 15% auto;
-    padding: 20px;
-    border: 1px solid #888;
-    width: 30%;
-}*/
-
-/* The Close Button */
-.close {
-    color: #aaa;
-    float: right;
-    font-size: 28px;
-    font-weight: bold;
-}
-
-.close:hover,
-.close:focus {
-    color: black;
-    text-decoration: none;
-    cursor: pointer;
-}
-
-
-/* Tooltip container */
-.tooltip {
-    position: relative;
-    display: inline-block;
-    border-bottom: 1px dotted black; /* If you want dots under the hoverable text */
-}
-
-/* Tooltip text */
-.tooltip .tooltiptext {
-    visibility: hidden;
-    width: 120px;
-    background-color: black;
-    color: #fff;
-    text-align: center;
-    padding: 5px 0;
-    border-radius: 6px;
-
-    /* Position the tooltip text - see examples below! */
-    position: absolute;
-    z-index: 1;
-}
-
-/* Show the tooltip text when you mouse over the tooltip container */
-.tooltip:hover .tooltiptext {
-    visibility: visible;
-}
-
-
-</style>
-
-<div id="body">
-
-  <h1 style="margin-bottom:0.5em;">Communicator</h1>
-  <h3>Select recipients by:</h3>
-
-  <form class="radios">
-  <div>
-    <input type="radio" id="intRadio" name="type" value="intervention" checked="checked" style="width:50px; height:20px;">Analytics
-    <input type="radio" id="annRadio" name="type" value="announcement" style="width:50px; height:20px;">All Learners
-  </div>
-</form>
-
-<!-- <div class="dropdown">
-  <button onclick="toggleDropdown()" class="dropbtn" style="width:165px;">Load Past Communications</button>
-  <div id="myDropdown" class="dropdown-content" style="height:300px; overflow:scroll;">
-  </div>
-</div> -->
-
-<select id="myDropdown" onchange="optSelected(this.value)" style="float:left;"></select>
-
-<!-- <button type="button" id="test">Test</button> -->
-<!-- <button type="button" id="test2">Test2</button> -->
-
-  <div id="intervention" style="display:block;">
-
-    <h2 id="policyName" style="display:none;">Policy Name<h2>
-
-    <p style="float:left; clear:left;">Learner selection groups to try:
-      <button type="button" id="comp-no-cert">Complete But No Certificate</button>
-      <button type="button" id="attr-no-comp-cert">Attrit But No Complete/Certificate</button>
-    </p>
-
-    <div id="charts">
-      <div id="completion-chart" class="chart">
-        <div class="title">Completion % chance</div>
-      </div>
-      <div id="attrition-chart" class="chart">
-        <div class="title">Attrition % chance</div>
-      </div>
-      <div id="certification-chart" class="chart">
-        <div class="title">Certification % chance</div>
-      </div>
-    </div>
-
-    <aside id="totals"><span id="active">-</span><span id="percentage"></span> of <span id="total">-</span> learners selected</aside>
-
-    <div id="lists">
-      <div id="student-list" class="list" style="display:none;">
-        <div>
-          <div style="width:200px; display:inline-block">Anonymized Student ID</div>
-          <div style="width:150px; display:inline-block">Completion %</div>
-          <div style="width:150px; display:inline-block">Attrition %</div>
-          <div style="width:150px; display:inline-block">Certification %</div>
-      </div>
-    </div>
-    </div>
-
-    <button title="This button will stop the automatic check and send for new matches. Note that you cannot resume a past communication once it has been stopped. You must create a new one." type="button" id="stopBtn" style="display:none">Stop Automation</button>
-
-</div>
-
-<form style="border-style:solid; padding: 20px; margin-top:50px;">
-  <br>
-  <h4>Compose Email</h4>
-  <h6 id="recipients" style="font-family:Open-Sans; font-size:16px; font-weight:100;"></h6>
-  <h6 id="all-recipients" style="font-family:Open-Sans; font-size:16px; font-weight:100;display:none;"></h6>
-  <input id="reply-to" type="text" placeholder="Instructor Email Address">
-  <h6>Reply To</h6>
-  <input id="email-subject" type="text" placeholder="Subject">
-  <h6>Subject</h6>
-  <textarea id="email-body" style="width:500px; height: 100px" placeholder="Tips [:fullname:]"></textarea>
-  <h6>Body</h6>
-  <br>
-  <br>
-  <button type="button" id="emailButton">Send email to selected learners</button>
-  <input id="automated" type="checkbox" style="margin-right: 10px; margin-left: 50px; display:inline; width:16px; height:16px"><p id="automated2" style="display:inline;">Automatically check for and send to new matches found daily<p>
-  <p>*Please check the maximum daily recipient limit of your email provider. For example, Gmail is 500 per day.*</p>
-</form>
-
-<!-- Trigger/Open The Modal -->
-<!-- <button id="modalBtn">Save</button> -->
-
-<!-- The Modal -->
-<!-- <div id="myModal" class="modal"> -->
-
-  <!-- Modal content -->
-  <!-- <div class="modal-content">
-    <span class="close">&times;</span>
-    <form>
-      <h4>Name</h4>
-      <input id="policy-name" type="text" value="Policy Name">
-      <button type="button" id="policy-save">Save Policy</button>
-    </form>
-  </div> -->
-
-<!-- </div> -->
-<!-- <button type="button" id="stopBtn" style="display:none;">Delete</button> -->
-<!-- <button type="button" id="automated">Automated</button> -->
-
 <script>
 
 window.filterLimits = {
@@ -814,6 +437,7 @@ var settings = {
 
     var load = document.createElement("option");
     load.selected = true;
+    load.hidden = true;
     load.disabled = true;
     load.text = "Load Past Communications";
     myDropdown.appendChild(load);
@@ -821,32 +445,34 @@ var settings = {
     for (var p in response) {
       console.log('after');
       var policy = document.createElement("option");
-      var formatted_date = new Date(response[p].timestamp).toDateString().split(" ")
+      var formatted_date = new Date(response[p].timestamp).toDateString().split(" ");
       var final_display = formatted_date[1] + " " + formatted_date[2] + " " + formatted_date[3] + " - " + response[p].name;
       if (response[p].auto === "true") {
-        final_display = "(Active) " + final_display;
+        final_display = "<strong>(Active)</strong>" + " " + final_display;
+        policy.setAttribute("style", "background:maroon;color:white");
       }
       policy.innerHTML = final_display;
       policy.setAttribute("id", response[p].name);
-      policy.setAttribute("value", JSON.stringify(response[p]));
+
+      policy.onclick = (function (response, p) {
+          return function () {
+            filter([response[p].comp, response[p].attr, response[p].cert]);
+            $('#email-subject').attr('value', response[p].subject);
+            $('#email-body').attr('value', response[p].body);
+            $('#reply-to').attr('value', response[p].reply);
+            $('#policyName').text(response[p].name);
+            $('#policyName').css('display', 'block');
+            if (response[p].auto === "true") {
+              $('#automated').attr('checked', true);
+              $('#stopBtn').css('display', 'inline-block');
+            }
+          };
+      })(response, p);
       myDropdown.appendChild(policy);
     }
   }
 };
 $.ajax(settings);
-}
-
-function optSelected (response) {
-  var response = JSON.parse(response);
-  filter([response.comp, response.attr, response.cert]);
-  $('#email-subject').attr('value', response.subject);
-  $('#email-body').attr('value', response.body);
-  $('#reply-to').attr('value', response.reply);
-  $('#policyName').text(response.name);
-  if (response.auto === "true") {
-    $('#automated').attr('checked', true);
-    $('#stopBtn').css('display', 'inline-block');
-  }
 }
 
 
@@ -863,6 +489,7 @@ var settings = {
 
     var load = document.createElement("option");
     load.selected = true;
+    load.hidden = true;
     load.disabled = true;
     load.text = "Load Past Communications";
     myDropdown.appendChild(load);
@@ -870,11 +497,20 @@ var settings = {
     for (var p in response) {
       console.log(p);
       var policy = document.createElement("option");
-      var formatted_date = new Date(response[p].timestamp).toDateString().split(" ")
+      var formatted_date = new Date(response[p].timestamp).toDateString().split(" ");
       var final_display = formatted_date[1] + " " + formatted_date[2] + " " + formatted_date[3] + " - " + response[p].name;
       policy.innerHTML = final_display;
       policy.setAttribute("id", response[p].name);
-      policy.setAttribute("value", JSON.stringify(response[p]));
+      policy.onclick = (function (response, p) {
+          return function () {
+            filter([response[p].comp, response[p].attr, response[p].cert]);
+            $('#email-subject').attr('value', response[p].subject);
+            $('#email-body').attr('value', response[p].body);
+            $('#reply-to').attr('value', response[p].reply);
+            $('#policyName').text(response[p].name);
+            $('#policyName').css('display', 'block');
+          };
+      })(response, p);
       myDropdown.appendChild(policy);
     }
   }
@@ -937,7 +573,7 @@ function stop_policy () {
   $.ajax(settings);
 }
 
-var date = new Date();
+var date = new Date().toISOString();
 console.log(date);
 
 window.onload = function() {
@@ -949,14 +585,12 @@ window.onload = function() {
       if (confirm("Are you sure you want to send this email to " + window.selectedStudents.length + " students?")) {
         getIDs(send_emails);
         getIDs(send_policy);
-        get_interventions();
       }
     }
     else {
       if (confirm("Are you sure you want to send this email to " + $('#total')[0].innerHTML + " students?")) {
         getIDs(send_emails);
         getIDs(send_policy);
-        get_announcements();
       }
     }
   });
