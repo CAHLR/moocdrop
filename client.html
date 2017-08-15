@@ -1,0 +1,85 @@
+<script src="/static/d3.js" defer></script>
+<script src="/static/crossfilter.js" defer></script>
+<script src="/static/cross_main.js" defer></script>
+<script src="/static/client_main.js" defer></script>
+<link rel="stylesheet" href="client_main.css">
+
+<meta charset="utf-8">
+
+<div id="body">
+
+  <h1 style="margin-bottom:0.5em;">Communicator</h1>
+  <h3>Select recipients by:</h3>
+
+  <form class="radios">
+  <div>
+    <input type="radio" id="analyticsRadio" name="type" value="analytics" checked="checked" style="width:50px; height:20px;">Analytics
+    <input type="radio" id="allRadio" name="type" value="all" style="width:50px; height:20px;">All Learners
+  </div>
+</form>
+
+<select id="myDropdown" onchange="optSelected(this.value)" style="float:left;"></select>
+
+<!-- <button type="button" id="test">All Learners</button> -->
+<!-- <button type="button" id="test2">Analytics</button> -->
+
+  <div id="analytics" style="display:block;">
+
+    <p style="float:left; clear:left;">Learner selection groups to try:
+      <button type="button" id="comp-no-cert">Complete But No Certificate</button>
+      <button type="button" id="attr-no-comp-cert">Attrit But No Complete/Certificate</button>
+    </p>
+
+    <div id="charts">
+      <div id="completion-chart" class="chart">
+        <div class="title">Completion % chance</div>
+      </div>
+      <div id="attrition-chart" class="chart">
+        <div class="title">Attrition % chance</div>
+      </div>
+      <div id="certification-chart" class="chart">
+        <div class="title">Certification % chance</div>
+      </div>
+    </div>
+
+    <aside id="totals"><span id="active">-</span><span id="percentage"></span> of <span id="total">-</span> learners selected</aside>
+
+    <div id="lists">
+      <div id="student-list" class="list" style="display:none;">
+        <div>
+          <div style="width:200px; display:inline-block">Anonymized Student ID</div>
+          <div style="width:150px; display:inline-block">Completion %</div>
+          <div style="width:150px; display:inline-block">Attrition %</div>
+          <div style="width:150px; display:inline-block">Certification %</div>
+      </div>
+    </div>
+    </div>
+
+</div>
+
+<form style="border-style:solid; padding: 20px; margin-top:50px;">
+  <br>
+  <h4>Compose Email</h4>
+  <h6 id="recipients" style="font-family:Open-Sans; font-size:16px; font-weight:100;"></h6>
+  <h6 id="all-recipients" style="font-family:Open-Sans; font-size:16px; font-weight:100;display:none;"></h6>
+
+  <input id="from-name" type="text" placeholder="Instructor Name" style="width:250px;">
+  <h6>From "Name"</h6>
+
+  <input id="reply-to" type="text" placeholder="Instructor Email Address" style="width:250px;">
+  <h6>From "Email"</h6>
+
+  <input id="email-subject" type="text" placeholder="Subject" style="width:250px;">
+  <h6>Subject</h6>
+
+  <textarea id="email-body" style="width:500px; height: 100px" placeholder="Use [:fullname:] to insert learner's full name and [:firstname:] to insert learner's last name"></textarea>
+  <h6>Body</h6>
+
+  <br>
+  <button type="button" id="emailButton">Send email to selected learners</button>
+  <input id="automated" type="checkbox" style="margin-right: 10px; margin-left: 50px; display:inline; width:16px; height:16px"><p id="automated2" style="display:inline;">Automatically check for and send to new matches found daily<p>
+  <p id="tip" style="color:#B72667; width:500px; display:none;">Tip: Enabling the check will send emails to all of the new matches since this communication was first sent.</p>
+  <p>*Please check the maximum daily recipient limit of your email provider. For example, Gmail is 500 per day.*</p>
+</form>
+
+<button type="button" id="saveChanges" style="display:none; background:#00A0E3; float:right; color: white; margin:25px; width:200px; height:50px">Save Changes</button>

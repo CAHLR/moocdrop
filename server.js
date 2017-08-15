@@ -14,16 +14,13 @@ var Policy     = require(process.cwd() + '/app/models/policy');
 var mongoose   = require('mongoose');
 mongoose.connect('mongodb://cahl.berkeley.edu:1304/policies'); // ******put a /events after port to save into that db
 
-
-// NEED TO CHANGE MASTER to get actual, copy over
 // var csvWeekly = '../MASTER_user_info.csv';  // change this to location of email csv
 var csvWeekly = 'test.csv';  // change this to location of email csv
-// var csvDaily = process.cwd() + '../studentPredictions.csv'; // change this to location of prediction csv
-// var csvDaily = '/deepedu/research/moocdrop/live-data/new_prediction.csv';
+// var csvDaily = '/deepedu/research/moocdrop/live-data/new_prediction.csv'; // change this to location of prediction csv
 var csvDaily = '/deepedu/research/moocdrop/live-data/moocdrop/test_pred.csv';
-var gmailUsername = 'berkeleyx.communications@gmail.com'; // change to the account you want to have sending emails, escape @ as '%40'
+
+var gmailUsername = 'berkeleyx.communications@gmail.com'; // change to the account you want to have sending emails
 var gmailPassword = 'AGfsdj45j&2jkfasdbjk$309vshadjkfhsadschsd32jhkjh!';
-//change to match
 var secretUsername = 'john';  // change: must be shared with client.html
 var secretPassword = 'secret'; // change: must be shared with client.html
 
@@ -38,10 +35,10 @@ fs.readFile(index_csv, 'UTF-8', function(err, csv) {
           all_ids.push(data[i][1]);
           anon_to_email[data[i][1]] = {'email': data[i][3]}; // email
           if (data[i][4]) {
-            anon_to_email[data[i][1]]['first'] = data[i][4]; // first name
+            anon_to_email[data[i][1]].first = data[i][4]; // first name
           }
           if (data[i][5]) {
-            anon_to_email[data[i][1]]['last'] = data[i][5]; // last name
+            anon_to_email[data[i][1]].last = data[i][5]; // last name
           }
       }
       else {
@@ -96,6 +93,14 @@ function checkCredentials(credentials) {
   }
 }
 
+function myError(err) {
+      if (err) {
+          console.log(err);
+          console.log("email send failed");
+      }
+}
+
+
  // on routes that end in /email
  // ----------------------------------------------------
 router.route('/email')
@@ -113,26 +118,21 @@ router.route('/email')
               var from = "'" + req.body.from + " <" + gmailUsername +">'";
               console.log(from);
 
-              if (anon_to_email[id]['first']) {
-                message_body = message_body.replace('[:firstname:]', anon_to_email[id]['first']);
+              if (anon_to_email[id].first) {
+                message_body = message_body.replace('[:firstname:]', anon_to_email[id].first);
               }
               else {
                 message_body = message_body.replace('[:firstname:]', '');
               }
 
-              if (anon_to_email[id]['first'] && anon_to_email[id]['last']) {
-                message_body = message_body.replace('[:fullname:]', anon_to_email[id]['first'] + " " + anon_to_email[id]['last']);
+              if (anon_to_email[id].first && anon_to_email[id].last) {
+                message_body = message_body.replace('[:fullname:]', anon_to_email[id].first + " " + anon_to_email[id].last);
               }
               else {
                 message_body = message_body.replace('[:fullname:]', '');
               }
 
-              sendEmail(anon_to_email[id].email, from, req.body.subject, message_body, req.body.reply, function (err) {
-                  if (err) {
-                      console.log(err);
-                      console.log("email send failed");
-                  }
-                });
+              sendEmail(anon_to_email[id].email, from, req.body.subject, message_body, req.body.reply, myError);
           }
           else {
             continue;
@@ -149,11 +149,11 @@ router.route('/email')
 
 function sendEmail(email, from, subject, content, reply, cb) {
     var mailOptions = {
-        from: from, // sender address and name
+        from: from, // sender name and address
         to: email, // list of receivers
-        subject: subject, // Subject line
+        subject: subject, // subject line
         text: content, // plaintext body
-        replyTo: reply
+        replyTo: reply //replyTo address
     };
 
     // send mail with defined transport object
@@ -165,6 +165,7 @@ function sendEmail(email, from, subject, content, reply, cb) {
     });
 }
 
+// Sends the prediction file to the client
 router.route('/predictions').get(function(req, res) {
   var credentials = auth(req);
   if (!checkCredentials(credentials)) {
@@ -176,8 +177,9 @@ router.route('/predictions').get(function(req, res) {
   res.sendFile(csvDaily);
 });
 
-router.route('/interventions').get(function(req, res) {
-  query = Policy.find({"intervention": "true" }).sort({"timestamp": -1});
+// Queries the database for just
+router.route('/analytics').get(function(req, res) {
+  query = Policy.find({"analytics": "true" }).sort({"timestamp": -1});
 
   query.exec(function (err, output) {
       if (err) {
@@ -190,7 +192,7 @@ router.route('/interventions').get(function(req, res) {
 });
 
 router.route('/announcements').get(function(req, res) {
-  query = Policy.find({"intervention": "false" }).sort({"timestamp" : -1});
+  query = Policy.find({"analytics": "false" }).sort({"timestamp" : -1});
 
   query.exec(function (err, output) {
       if (err) {
@@ -204,7 +206,7 @@ router.route('/announcements').get(function(req, res) {
 
 router.route('/save').post(function(req, res) {
   var policy = new Policy();
-  if (req.body.intervention === 'true') {
+  if (req.body.analytics === 'true') {
     policy.ids = req.body.ids;
     policy.comp = req.body.comp;
     policy.attr = req.body.attr;
@@ -212,19 +214,18 @@ router.route('/save').post(function(req, res) {
     policy.auto = req.body.auto;
   }
   else {
-    policy.ids = ''
+    policy.ids = '';
     policy.comp = [];
     policy.attr = [];
     policy.cert = [];
-    policy.auto = 'false'
+    policy.auto = 'false';
   }
-  policy.name = req.body.name;
   policy.subject = req.body.subject;
   policy.from = req.body.from;
   policy.body = req.body.body;
   policy.reply = req.body.reply;
   policy.timestamp = req.body.timestamp;
-  policy.intervention = req.body.intervention;
+  policy.analytics = req.body.analytics;
 
   policy.save(function(err) {
     if (err) {
@@ -238,16 +239,17 @@ router.route('/save').post(function(req, res) {
 router.route('/changes').post(function(req, res) {
   console.log("changes");
   var p = {};
-  p["ids"] = req.body.ids;
-  p["comp"] = req.body.comp;
-  p["attr"] = req.body.attr;
-  p["cert"] = req.body.cert;
-  p["auto"] = req.body.auto;
-  p["name"] = req.body.name;
-  p["subject"] = req.body.subject;
-  p["body"] = req.body.body;
-  p["reply"] = req.body.reply;
-  Policy.update({"name": req.body.name}, {"$set": p}).exec();
+  p.ids = req.body.ids;
+  p.from = req.body.from;
+  p.reply = req.body.reply;
+  p.subject = req.body.subject;
+  p.body = req.body.body;
+  p.comp = req.body.comp;
+  p.attr = req.body.attr;
+  p.cert = req.body.cert;
+  p.auto = req.body.auto;
+
+  Policy.update({"subject": req.body.subject}, {"$set": p}).exec();
   res.json({ message: 'Successfully saved' });
 });
 
@@ -266,9 +268,8 @@ router.route('/').get(function(req, res) {
 // REGISTER OUR ROUTES -------------------------------
 // all of our routes will be prefixed with /api
 app.use('/api', router);
-//app.use(express.static('public'));
+
 // START THE SERVER
 // =============================================================================
 https.createServer(options, app).listen(port);
-//http.createServer(app).listen(port);
 console.log('Node server start on port: ' + port);

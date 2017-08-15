@@ -1,7 +1,11 @@
 <script src="/static/d3.js" defer></script>
 <script src="/static/crossfilter.js" defer></script>
+<script src="/static/cross_main.js" defer></script>
+<script src="/static/client_main.js" defer></script>
+<link rel="stylesheet" href="client_main.css">
 
 <meta charset="utf-8">
+
 <style>
 
 @import url(https://fonts.googleapis.com/css?family=Yanone+Kaffeesatz:400,700);
@@ -280,6 +284,7 @@ aside {
 
 </style>
 
+
 <div id="body">
 
   <h1 style="margin-bottom:0.5em;">Communicator</h1>
@@ -287,25 +292,17 @@ aside {
 
   <form class="radios">
   <div>
-    <input type="radio" id="intRadio" name="type" value="intervention" checked="checked" style="width:50px; height:20px;">Analytics
-    <input type="radio" id="annRadio" name="type" value="announcement" style="width:50px; height:20px;">All Learners
+    <input type="radio" id="analyticsRadio" name="type" value="analytics" checked="checked" style="width:50px; height:20px;">Analytics
+    <input type="radio" id="allRadio" name="type" value="all" style="width:50px; height:20px;">All Learners
   </div>
 </form>
 
-<!-- <div class="dropdown">
-  <button onclick="toggleDropdown()" class="dropbtn" style="width:165px;">Load Past Communications</button>
-  <div id="myDropdown" class="dropdown-content" style="height:300px; overflow:scroll;">
-  </div>
-</div> -->
-
 <select id="myDropdown" onchange="optSelected(this.value)" style="float:left;"></select>
 
-<!-- <button type="button" id="test">Test</button> -->
-<button type="button" id="test2">Test2</button>
+<!-- <button type="button" id="test">All Learners</button> -->
+<!-- <button type="button" id="test2">Analytics</button> -->
 
-  <div id="intervention" style="display:block;">
-
-    <h2 id="policyName" style="display:none;">Policy Name<h2>
+  <div id="analytics" style="display:block;">
 
     <p style="float:left; clear:left;">Learner selection groups to try:
       <button type="button" id="comp-no-cert">Complete But No Certificate</button>
@@ -366,26 +363,6 @@ aside {
 
 <button type="button" id="saveChanges" style="display:none; background:#00A0E3; float:right; color: white; margin:25px; width:200px; height:50px">Save Changes</button>
 
-<!-- Trigger/Open The Modal -->
-<!-- <button id="modalBtn">Save</button> -->
-
-<!-- The Modal -->
-<!-- <div id="myModal" class="modal"> -->
-
-  <!-- Modal content -->
-  <!-- <div class="modal-content">
-    <span class="close">&times;</span>
-    <form>
-      <h4>Name</h4>
-      <input id="policy-name" type="text" value="Policy Name">
-      <button type="button" id="policy-save">Save Policy</button>
-    </form>
-  </div> -->
-
-<!-- </div> -->
-<!-- <button type="button" id="saveChanges" style="display:none;">Delete</button> -->
-<!-- <button type="button" id="automated">Automated</button> -->
-
 <script>
 
 window.filterLimits = {
@@ -393,6 +370,7 @@ window.filterLimits = {
   'attrition-chart': [0, 100],
   'completion-chart': [0, 100]
 };
+
 function loadData(error, students) {
   if (error) {
     console.log(error);
@@ -755,21 +733,120 @@ function drawGraphs(dataUrl, json) {
   }
 }
 
-var ids;
-
-function getIDs(callback) {
-  ids = [];
-  // ids = '';
+// Gets the anon ids from the crossfilter
+function getIDs() {
+  var ids = [];
   for (i = 0; i < $('.anon-student').length; i++) {
       ids.push($('.anon-student')[i].innerHTML);
-      // ids += ($('.anon-student')[i].innerHTML) + ' ';
   }
-  console.log(ids);
-  callback();
+  return ids;
+}
+
+// Toggles the dropdown
+function toggleDropdown() {
+    document.getElementById("myDropdown").classList.toggle("show");
+}
+
+// Closes the dropdown menu if the user clicks outside of it
+window.onclick = function(event) {
+  if (!event.target.matches('.dropbtn')) {
+
+    var dropdowns = document.getElementsByClassName("dropdown-content");
+    var i;
+    for (i = 0; i < dropdowns.length; i++) {
+      var openDropdown = dropdowns[i];
+      if (openDropdown.classList.contains('show')) {
+        openDropdown.classList.remove('show');
+      }
+    }
+  }
+};
+
+// Updates the cross filter and compose email upon a selection of a dropdown option
+function optSelected (response) {
+  var r = JSON.parse(response);
+  filter([r.comp, r.attr, r.cert]);
+  $('#email-subject').attr('value', r.subject);
+  $('#email-body').attr('value', r.body);
+  $('#reply-to').attr('value', r.reply);
+  $('#from-name').attr('value', r.from);
+  if (r.auto === "true") {
+    $('#automated').attr('checked', true);
+    $('#saveChanges').css('display', 'inline-block');
+  }
+}
+
+// Clears the dropdown and appends on a disabled Load Past Communications option
+function clear_drop_pop() {
+  var myDropdown = document.getElementById('myDropdown');
+  myDropdown.innerHTML = '';
+
+  var load = document.createElement("option");
+  load.selected = true;
+  load.disabled = true;
+  load.text = "Load Past Communications";
+  myDropdown.appendChild(load);
+  return myDropdown;
+}
+
+// Creates the name for the dropdown which includes the date and subject
+function make_name(timestamp, subject) {
+  var formatted_date = new Date(timestamp).toDateString().split(" ");
+  return formatted_date[1] + " " + formatted_date[2] + " " + formatted_date[3] + " - " + subject;
+}
+
+// ---------- API CALLS ---------------------
+
+function get_analytics () {
+var settings = {
+  "async": true,
+  "crossDomain": true,
+  "url": "https://cahl.berkeley.edu:1337/api/analytics",
+  "method": "GET",
+  success: function(response) {
+    // Clear dropdown and populate
+    var d = clear_drop();
+
+    for (var p in response) {
+      var policy = document.createElement("option");
+      var name = make_name(response[p].timestamp, response[p].subject);
+      if (response[p].auto === "true") {
+        name = "(Active) " + name;
+      }
+      policy.innerHTML = name;
+      policy.setAttribute("value", JSON.stringify(response[p]));
+      d.appendChild(policy);
+    }
+  }
+};
+$.ajax(settings);
+}
+
+function get_all () {
+var settings = {
+  "async": true,
+  "crossDomain": true,
+  "url": "https://cahl.berkeley.edu:1337/api/all",
+  "method": "GET",
+  success: function(response) {
+    // Clear dropdown and populate
+    var d = clear_drop();
+
+    for (var p in response) {
+      var policy = document.createElement("option");
+      var name = make_name(response[p].timestamp, response[p].subject);
+      policy.innerHTML = name;
+      policy.setAttribute("value", JSON.stringify(response[p]));
+      d.appendChild(policy);
+    }
+  }
+};
+$.ajax(settings);
 }
 
 function send_emails () {
-  var ann = ($('#annRadio').attr("checked") === "checked");
+  var ids = getIDs();
+  var ann = ($('#allRadio').attr("checked") === "checked");
   var settings = {
     "async": true,
     "crossDomain": true,
@@ -786,120 +863,20 @@ function send_emails () {
       "ann": ann
     },
     success: function(response) {
-      console.log("Successfully sent!");
       alert("Successfully sent!");
     }
   };
   $.ajax(settings);
 }
 
-function toggleDropdown() {
-    document.getElementById("myDropdown").classList.toggle("show");
-}
-
-// Close the dropdown menu if the user clicks outside of it
-window.onclick = function(event) {
-  if (!event.target.matches('.dropbtn')) {
-
-    var dropdowns = document.getElementsByClassName("dropdown-content");
-    var i;
-    for (i = 0; i < dropdowns.length; i++) {
-      var openDropdown = dropdowns[i];
-      if (openDropdown.classList.contains('show')) {
-        openDropdown.classList.remove('show');
-      }
-    }
-  }
-}
-
-
-
-function get_interventions () {
-var settings = {
-  "async": true,
-  "crossDomain": true,
-  "url": "https://cahl.berkeley.edu:1337/api/interventions",
-  "method": "GET",
-  success: function(response) {
-    var myDropdown = document.getElementById('myDropdown');
-    myDropdown.innerHTML = '';
-
-    var load = document.createElement("option");
-    load.selected = true;
-    load.disabled = true;
-    load.text = "Load Past Communications";
-    myDropdown.appendChild(load);
-
-    for (var p in response) {
-      var policy = document.createElement("option");
-      var formatted_date = new Date(response[p].timestamp).toDateString().split(" ")
-      var final_display = formatted_date[1] + " " + formatted_date[2] + " " + formatted_date[3] + " - " + response[p].name;
-      if (response[p].auto === "true") {
-        final_display = "(Active) " + final_display;
-      }
-      policy.innerHTML = final_display;
-      policy.setAttribute("id", response[p].name);
-      policy.setAttribute("value", JSON.stringify(response[p]));
-      myDropdown.appendChild(policy);
-    }
-  }
-};
-$.ajax(settings);
-}
-
-function optSelected (response) {
-  var response = JSON.parse(response);
-  filter([response.comp, response.attr, response.cert]);
-  $('#email-subject').attr('value', response.subject);
-  $('#email-body').attr('value', response.body);
-  $('#reply-to').attr('value', response.reply);
-  $('#from-name').attr('value', response.from);
-  $('#policyName').text(response.name);
-  if (response.auto === "true") {
-    $('#automated').attr('checked', true);
-  }
-  $('#saveChanges').css('display', 'inline-block');
-}
-
-function get_announcements () {
-var settings = {
-  "async": true,
-  "crossDomain": true,
-  "url": "https://cahl.berkeley.edu:1337/api/announcements",
-  "method": "GET",
-  success: function(response) {
-    var myDropdown = document.getElementById('myDropdown');
-    myDropdown.innerHTML = '';
-
-    var load = document.createElement("option");
-    load.selected = true;
-    load.disabled = true;
-    load.text = "Load Past Communications";
-    myDropdown.appendChild(load);
-
-    for (var p in response) {
-      var policy = document.createElement("option");
-      var formatted_date = new Date(response[p].timestamp).toDateString().split(" ")
-      var final_display = formatted_date[1] + " " + formatted_date[2] + " " + formatted_date[3] + " - " + response[p].name;
-      policy.innerHTML = final_display;
-      policy.setAttribute("id", response[p].name);
-      policy.setAttribute("value", JSON.stringify(response[p]));
-      myDropdown.appendChild(policy);
-    }
-  }
-};
-$.ajax(settings);
-}
-
-
 function send_policy () {
+  var ids = getIDs();
   var comp = window.filterLimits["completion-chart"];
   var attr = window.filterLimits["attrition-chart"];
   var cert = window.filterLimits["certification-chart"];
 
   var automated = ($('#automated').attr("checked") === "checked");
-  console.log("automated: " + automated);
-  var intervention = ($('#intRadio').attr("checked") === "checked");
+  var analytics = ($('#analyticsRadio').attr("checked") === "checked");
 
   var settings = {
     "async": true,
@@ -909,29 +886,26 @@ function send_policy () {
     "data":
     {
       "ids": ids,
+      "from": $('#from-name').attr('value'),
+      "reply": $('#reply-to').attr('value'),
       "subject": $('#email-subject').attr('value'),
       "body": $('#email-body').attr('value'),
-      "reply": $('#reply-to').attr('value'),
-      "name": $('#email-subject').attr('value'),
-      "from": $('#from-name').attr('value'),
       "comp": comp,
       "attr": attr,
       "cert": cert,
       "auto": automated,
-      "timestamp": new Date(),
-      "intervention": intervention
+      "analytics": analytics,
+      "timestamp": new Date()
     },
     success: function(response) {
       console.log("Policy Successfully sent!");
-      alert("Policy Saved!");
     }
   };
   $.ajax(settings);
 }
 
-
 function save_changes () {
-  console.log("starting save");
+  var ids = getIDs();
   var comp = window.filterLimits["completion-chart"];
   var attr = window.filterLimits["attrition-chart"];
   var cert = window.filterLimits["certification-chart"];
@@ -944,12 +918,11 @@ function save_changes () {
     "method": "POST",
     "data":
     {
-      "name": $('#policyName')[0].innerHTML,
       "ids": ids,
+      "from": $('#from-name').attr('value'),
+      "reply": $('#reply-to').attr('value'),
       "subject": $('#email-subject').attr('value'),
       "body": $('#email-body').attr('value'),
-      "reply": $('#reply-to').attr('value'),
-      "from": $('#from-name').attr('value'),
       "comp": comp,
       "attr": attr,
       "cert": cert,
@@ -964,20 +937,20 @@ function save_changes () {
 
 window.onload = function() {
   drawGraphs("https://cahl.berkeley.edu:1337/api/predictions");
-  get_interventions();
+  get_analytics();
   $('#emailButton').on('click', function() {
-    if ($('#intRadio').attr("checked") === "checked") {
+    if ($('#analyticsRadio').attr("checked") === "checked") {
       if (confirm("Are you sure you want to send this email to " + window.selectedStudents.length + " students?")) {
-        getIDs(send_emails);
-        getIDs(send_policy);
-        get_interventions();
+        send_emails();
+        send_policy();
+        get_analytics();
       }
     }
     else {
       if (confirm("Are you sure you want to send this email to " + $('#total')[0].innerHTML + " students?")) {
-        getIDs(send_emails);
-        getIDs(send_policy);
-        get_announcements();
+        send_emails();
+        send_policy();
+        get_all();
       }
     }
   });
@@ -987,37 +960,26 @@ window.onload = function() {
   $('#attr-no-comp-cert').on('click', function() {
     filter([[0,70], [80, 100], [0, 70]]);
   });
-  $('#annRadio').on('click', function() {
-    get_announcements();
-    $('#intervention').css('display', 'none');
+  $('#allRadio').on('click', function() {
+    get_all();
+    $('#analytics').css('display', 'none');
     $('#automated').css('display', 'none');
     $('#automated2').css('display', 'none');
     $('#all-recipients').css('display', 'block');
     $('#recipients').css('display', 'none');
   });
-  $('#intRadio').on('click', function() {
-    get_interventions();
-    $('#intervention').css('display', 'block');
-    // $('#modalBtn').css('display', 'block');
+  $('#analyticsRadio').on('click', function() {
+    get_analytics();
+    $('#analytics').css('display', 'block');
     $('#automated').css('display', 'inline');
-    $('#automated2').css('display', 'inline');
     $('#automated').attr('checked', false);
+    $('#automated2').css('display', 'inline');
     $('#all-recipients').css('display', 'none');
     $('#recipients').css('display', 'block');
   });
-  $('#test').on('click', function() {
-    getIDs(send_policy);
-    get_announcements();
-  });
-  $('#test2').on('click', function() {
-    getIDs(send_policy);
-    get_interventions();
-  });
   $('#saveChanges').on('click', function() {
-    getIDs(save_changes);
-    var toDelete = $('#policyName').text();
-    $('#' + toDelete).remove();
-    $('#policyName').text('');
+    save_changes();
+    get_analytics();
   });
   $("#automated").hover(
     function() {
@@ -1027,8 +989,14 @@ window.onload = function() {
         $("#tip").hide();
     }
   );
+  $('#test').on('click', function() {
+    send_policy();
+    get_all();
+  });
+  $('#test2').on('click', function() {
+    send_policy();
+    get_analytics();
+  });
 };
-
-
 
 </script>

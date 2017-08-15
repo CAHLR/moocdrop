@@ -2,7 +2,6 @@ var mongoose     = require('mongoose');
 var Schema       = mongoose.Schema;
 
 var PolicySchema   = new Schema({
-    name: String,
     from: String,
     ids: Array, // could be changed
     subject: String,
@@ -13,7 +12,7 @@ var PolicySchema   = new Schema({
     cert: Array, // could be changed
     auto: String,
     timestamp: Date,
-    intervention: String
+    analytics: String
 });
 
 module.exports = mongoose.model('Policy', PolicySchema);
