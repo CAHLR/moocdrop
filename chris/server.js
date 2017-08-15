@@ -17,7 +17,7 @@ mongoose.connect('mongodb://cahl.berkeley.edu:1304/policies'); // ******put a /e
 // var csvWeekly = '../MASTER_user_info.csv';  // change this to location of email csv
 var csvWeekly = 'test.csv';  // change this to location of email csv
 // var csvDaily = '/deepedu/research/moocdrop/live-data/new_prediction.csv'; // change this to location of prediction csv
-var csvDaily = '/deepedu/research/moocdrop/live-data/moocdrop/test_pred.csv';
+var csvDaily = '/deepedu/research/moocdrop/live-data/moocdrop/chris/test_pred.csv';
 
 var gmailUsername = 'berkeleyx.communications@gmail.com'; // change to the account you want to have sending emails
 var gmailPassword = 'AGfsdj45j&2jkfasdbjk$309vshadjkfhsadschsd32jhkjh!';
