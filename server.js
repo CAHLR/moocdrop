@@ -21,8 +21,7 @@ var csvWeekly = 'test.csv';  // change this to location of email csv
 // var csvDaily = process.cwd() + '../studentPredictions.csv'; // change this to location of prediction csv
 // var csvDaily = '/deepedu/research/moocdrop/live-data/new_prediction.csv';
 var csvDaily = '/deepedu/research/moocdrop/live-data/moocdrop/test_pred.csv';
-console.log(process.cwd());
-var gmailUsername = 'berkeleyx.communications%40gmail.com'; // change to the account you want to have sending emails, escape @ as '%40'
+var gmailUsername = 'berkeleyx.communications@gmail.com'; // change to the account you want to have sending emails, escape @ as '%40'
 var gmailPassword = 'AGfsdj45j&2jkfasdbjk$309vshadjkfhsadschsd32jhkjh!';
 //change to match
 var secretUsername = 'john';  // change: must be shared with client.html
@@ -51,12 +50,6 @@ fs.readFile(index_csv, 'UTF-8', function(err, csv) {
     }
   });
 });
-
-// making policy dictionary
-// var policy_dict = {};
-// policy_dict['test'] = {'ids': ['12','54'], 'subject' : 'hello world', 'body': 'this is a test', 'name': '07/23/17 hello world', 'comp' : [15,22], 'attr' : [50,60], 'cert' : [78, 90], 'auto' : true};
-// policy_dict['test2'] = {'ids': ['82','54'], 'subject' : 'hello world88', 'body': '888this is a te8st', 'name': '07/23/17 h8e8l8l8o world', 'comp' : [5,82], 'attr' : [50,80], 'cert' : [78, 80], 'auto' : false};
-
 
 var transporter = nodemailer.createTransport('smtps://' + gmailUsername + ':' + encodeURI(gmailPassword) + '@smtp.gmail.com');
 
@@ -106,8 +99,8 @@ function checkCredentials(credentials) {
  // on routes that end in /email
  // ----------------------------------------------------
 router.route('/email')
-    // get the ids for emails
     .post(function(req, res) {
+      console.log(req.body.from === "");
       if (req.body.pass === 'sadfvkn88asVLS891') {
         var ids = req.body.ids;
         if (req.body.ann === 'true') {
@@ -117,22 +110,24 @@ router.route('/email')
           var id = ids[j];
           if (id in anon_to_email) {
               var message_body = req.body.body;
-              console.log(anon_to_email);
-              console.log(anon_to_email[id]['first'], anon_to_email[id]['last']);
+              var from = "'" + req.body.from + " <" + gmailUsername +">'";
+              console.log(from);
+
               if (anon_to_email[id]['first']) {
                 message_body = message_body.replace('[:firstname:]', anon_to_email[id]['first']);
               }
               else {
                 message_body = message_body.replace('[:firstname:]', '');
               }
-              if (message_body.indexOf('[:fullname:]') !== -1) {
+
+              if (anon_to_email[id]['first'] && anon_to_email[id]['last']) {
                 message_body = message_body.replace('[:fullname:]', anon_to_email[id]['first'] + " " + anon_to_email[id]['last']);
               }
               else {
                 message_body = message_body.replace('[:fullname:]', '');
               }
-              console.log(message_body);
-              sendEmail(anon_to_email[id].email, req.body.subject, message_body, req.body.reply, function (err) {
+
+              sendEmail(anon_to_email[id].email, from, req.body.subject, message_body, req.body.reply, function (err) {
                   if (err) {
                       console.log(err);
                       console.log("email send failed");
@@ -152,9 +147,9 @@ router.route('/email')
       }
     });
 
-function sendEmail(email, subject, content, reply, cb) {
+function sendEmail(email, from, subject, content, reply, cb) {
     var mailOptions = {
-        from: gmailUsername, // sender address
+        from: from, // sender address and name
         to: email, // list of receivers
         subject: subject, // Subject line
         text: content, // plaintext body
@@ -225,6 +220,7 @@ router.route('/save').post(function(req, res) {
   }
   policy.name = req.body.name;
   policy.subject = req.body.subject;
+  policy.from = req.body.from;
   policy.body = req.body.body;
   policy.reply = req.body.reply;
   policy.timestamp = req.body.timestamp;
@@ -239,9 +235,20 @@ router.route('/save').post(function(req, res) {
   });
 });
 
-router.route('/stop').post(function(req, res) {
-  Policy.update({"name": req.body.name}, {"$set": {"auto": "false"}}).exec();
-  res.json({ message: 'Successfully stopped' });
+router.route('/changes').post(function(req, res) {
+  console.log("changes");
+  var p = {};
+  p["ids"] = req.body.ids;
+  p["comp"] = req.body.comp;
+  p["attr"] = req.body.attr;
+  p["cert"] = req.body.cert;
+  p["auto"] = req.body.auto;
+  p["name"] = req.body.name;
+  p["subject"] = req.body.subject;
+  p["body"] = req.body.body;
+  p["reply"] = req.body.reply;
+  Policy.update({"name": req.body.name}, {"$set": p}).exec();
+  res.json({ message: 'Successfully saved' });
 });
 
 // This route exists only for testing your password

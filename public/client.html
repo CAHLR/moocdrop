@@ -273,6 +273,10 @@ aside {
     visibility: visible;
 }
 
+#automated:hover {
+
+}
+
 
 </style>
 
@@ -297,7 +301,7 @@ aside {
 <select id="myDropdown" onchange="optSelected(this.value)" style="float:left;"></select>
 
 <!-- <button type="button" id="test">Test</button> -->
-<!-- <button type="button" id="test2">Test2</button> -->
+<button type="button" id="test2">Test2</button>
 
   <div id="intervention" style="display:block;">
 
@@ -333,8 +337,6 @@ aside {
     </div>
     </div>
 
-    <button title="This button will stop the automatic check and send for new matches. Note that you cannot resume a past communication once it has been stopped. You must create a new one." type="button" id="stopBtn" style="display:none">Stop Automation</button>
-
 </div>
 
 <form style="border-style:solid; padding: 20px; margin-top:50px;">
@@ -342,18 +344,27 @@ aside {
   <h4>Compose Email</h4>
   <h6 id="recipients" style="font-family:Open-Sans; font-size:16px; font-weight:100;"></h6>
   <h6 id="all-recipients" style="font-family:Open-Sans; font-size:16px; font-weight:100;display:none;"></h6>
-  <input id="reply-to" type="text" placeholder="Instructor Email Address">
-  <h6>Reply To</h6>
-  <input id="email-subject" type="text" placeholder="Subject">
+
+  <input id="from-name" type="text" placeholder="Instructor Name" style="width:250px;">
+  <h6>From "Name"</h6>
+
+  <input id="reply-to" type="text" placeholder="Instructor Email Address" style="width:250px;">
+  <h6>From "Email"</h6>
+
+  <input id="email-subject" type="text" placeholder="Subject" style="width:250px;">
   <h6>Subject</h6>
-  <textarea id="email-body" style="width:500px; height: 100px" placeholder="Tips [:fullname:]"></textarea>
+
+  <textarea id="email-body" style="width:500px; height: 100px" placeholder="Use [:fullname:] to insert learner's full name and [:firstname:] to insert learner's last name"></textarea>
   <h6>Body</h6>
-  <br>
+
   <br>
   <button type="button" id="emailButton">Send email to selected learners</button>
   <input id="automated" type="checkbox" style="margin-right: 10px; margin-left: 50px; display:inline; width:16px; height:16px"><p id="automated2" style="display:inline;">Automatically check for and send to new matches found daily<p>
+  <p id="tip" style="color:#B72667; width:500px; display:none;">Tip: Enabling the check will send emails to all of the new matches since this communication was first sent.</p>
   <p>*Please check the maximum daily recipient limit of your email provider. For example, Gmail is 500 per day.*</p>
 </form>
+
+<button type="button" id="saveChanges" style="display:none; background:#00A0E3; float:right; color: white; margin:25px; width:200px; height:50px">Save Changes</button>
 
 <!-- Trigger/Open The Modal -->
 <!-- <button id="modalBtn">Save</button> -->
@@ -372,7 +383,7 @@ aside {
   </div> -->
 
 <!-- </div> -->
-<!-- <button type="button" id="stopBtn" style="display:none;">Delete</button> -->
+<!-- <button type="button" id="saveChanges" style="display:none;">Delete</button> -->
 <!-- <button type="button" id="automated">Automated</button> -->
 
 <script>
@@ -770,7 +781,7 @@ function send_emails () {
       "subject": $('#email-subject').attr('value'),
       "body": $('#email-body').attr('value'),
       "reply": $('#reply-to').attr('value'),
-      "name": date + $('#email-subject').attr('value'),
+      "from": $('#from-name').attr('value'),
       "pass": "sadfvkn88asVLS891",
       "ann": ann
     },
@@ -810,7 +821,8 @@ var settings = {
   "url": "https://cahl.berkeley.edu:1337/api/interventions",
   "method": "GET",
   success: function(response) {
-    document.getElementById('myDropdown').innerHTML = '';
+    var myDropdown = document.getElementById('myDropdown');
+    myDropdown.innerHTML = '';
 
     var load = document.createElement("option");
     load.selected = true;
@@ -819,7 +831,6 @@ var settings = {
     myDropdown.appendChild(load);
 
     for (var p in response) {
-      console.log('after');
       var policy = document.createElement("option");
       var formatted_date = new Date(response[p].timestamp).toDateString().split(" ")
       var final_display = formatted_date[1] + " " + formatted_date[2] + " " + formatted_date[3] + " - " + response[p].name;
@@ -842,14 +853,13 @@ function optSelected (response) {
   $('#email-subject').attr('value', response.subject);
   $('#email-body').attr('value', response.body);
   $('#reply-to').attr('value', response.reply);
+  $('#from-name').attr('value', response.from);
   $('#policyName').text(response.name);
   if (response.auto === "true") {
     $('#automated').attr('checked', true);
-    $('#stopBtn').css('display', 'inline-block');
   }
+  $('#saveChanges').css('display', 'inline-block');
 }
-
-
 
 function get_announcements () {
 var settings = {
@@ -868,7 +878,6 @@ var settings = {
     myDropdown.appendChild(load);
 
     for (var p in response) {
-      console.log(p);
       var policy = document.createElement("option");
       var formatted_date = new Date(response[p].timestamp).toDateString().split(" ")
       var final_display = formatted_date[1] + " " + formatted_date[2] + " " + formatted_date[3] + " - " + response[p].name;
@@ -904,11 +913,12 @@ function send_policy () {
       "body": $('#email-body').attr('value'),
       "reply": $('#reply-to').attr('value'),
       "name": $('#email-subject').attr('value'),
+      "from": $('#from-name').attr('value'),
       "comp": comp,
       "attr": attr,
       "cert": cert,
       "auto": automated,
-      "timestamp": date,
+      "timestamp": new Date(),
       "intervention": intervention
     },
     success: function(response) {
@@ -920,29 +930,40 @@ function send_policy () {
 }
 
 
-function stop_policy () {
+function save_changes () {
+  console.log("starting save");
+  var comp = window.filterLimits["completion-chart"];
+  var attr = window.filterLimits["attrition-chart"];
+  var cert = window.filterLimits["certification-chart"];
+  var automated = ($('#automated').attr("checked") === "checked");
+
   var settings = {
     "async": true,
     "crossDomain": true,
-    "url": "https://cahl.berkeley.edu:1337/api/stop",
+    "url": "https://cahl.berkeley.edu:1337/api/changes",
     "method": "POST",
     "data":
     {
-      "name": $('#policyName')[0].innerHTML
+      "name": $('#policyName')[0].innerHTML,
+      "ids": ids,
+      "subject": $('#email-subject').attr('value'),
+      "body": $('#email-body').attr('value'),
+      "reply": $('#reply-to').attr('value'),
+      "from": $('#from-name').attr('value'),
+      "comp": comp,
+      "attr": attr,
+      "cert": cert,
+      "auto": automated
     },
     success: function(response) {
-      console.log("Policy Successfully Stopped!");
+      console.log("Policy Successfully Saved!");
     }
   };
   $.ajax(settings);
 }
 
-var date = new Date();
-console.log(date);
-
 window.onload = function() {
   drawGraphs("https://cahl.berkeley.edu:1337/api/predictions");
-  $('#myDropdown').empty();
   get_interventions();
   $('#emailButton').on('click', function() {
     if ($('#intRadio').attr("checked") === "checked") {
@@ -967,7 +988,6 @@ window.onload = function() {
     filter([[0,70], [80, 100], [0, 70]]);
   });
   $('#annRadio').on('click', function() {
-    $('#myDropdown').empty();
     get_announcements();
     $('#intervention').css('display', 'none');
     $('#automated').css('display', 'none');
@@ -976,7 +996,6 @@ window.onload = function() {
     $('#recipients').css('display', 'none');
   });
   $('#intRadio').on('click', function() {
-    $('#myDropdown').empty();
     get_interventions();
     $('#intervention').css('display', 'block');
     // $('#modalBtn').css('display', 'block');
@@ -994,12 +1013,20 @@ window.onload = function() {
     getIDs(send_policy);
     get_interventions();
   });
-  $('#stopBtn').on('click', function() {
-    stop_policy();
+  $('#saveChanges').on('click', function() {
+    getIDs(save_changes);
     var toDelete = $('#policyName').text();
     $('#' + toDelete).remove();
     $('#policyName').text('');
   });
+  $("#automated").hover(
+    function() {
+        $("#tip").show();
+    },
+    function() {
+        $("#tip").hide();
+    }
+  );
 };
 
 

@@ -10,8 +10,9 @@
     ".git/**"
   ],
   "watch":[
-    "/new_server.js",
+    "/server.js",
     "/automated.py",
-    "/test_pred.csv"
+    "/test_pred.csv",
+    "/test.csv"
   ]
 }

@@ -56,7 +56,5 @@ for p in cursor:
             print(i)
             updated = old_ids + [i['anon_user_id']]
             db_policy.policies.find_one_and_update({"_id": p['_id']}, {"$set": {"ids":updated}})
-            data_to_send = {"pass": "sadfvkn88asVLS891", "ids": [i['anon_user_id']], "body": p['body'], "subject": p['subject'], "reply": p['reply']}
+            data_to_send = {"pass": "sadfvkn88asVLS891", "ids": [i['anon_user_id']], "body": p['body'], "subject": p['subject'], "reply": p['reply'], "from": p['from']}
             r = requests.post(url, data=json.dumps(data_to_send), headers=headers)
-
-    break

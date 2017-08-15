@@ -3,6 +3,7 @@ var Schema       = mongoose.Schema;
 
 var PolicySchema   = new Schema({
     name: String,
+    from: String,
     ids: Array, // could be changed
     subject: String,
     body: String,
