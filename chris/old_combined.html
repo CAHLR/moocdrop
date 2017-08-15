@@ -1,0 +1,1034 @@
+<script src="/static/d3.js" defer></script>
+<script src="/static/crossfilter.js" defer></script>
+
+<meta charset="utf-8">
+<style>
+
+@import url(https://fonts.googleapis.com/css?family=Yanone+Kaffeesatz:400,700);
+
+body {
+  font-family: "Helvetica Neue";
+  margin: 40px auto;
+  width: 100%;
+}
+
+#body {
+  position: relative;
+}
+
+button {
+  background-color: lightBlue;
+  cursor: pointer;
+}
+
+button:disabled {
+  background-color: white;
+  cursor: auto;
+}
+
+footer {
+  padding: 2em 0 1em 0;
+  font-size: 12px;
+}
+
+h1 {
+  font-size: 96px;
+  margin-top: .3em;
+  margin-bottom: 0;
+}
+
+h1 + h2 {
+  margin-top: 0;
+}
+
+h2 {
+  font-weight: 400;
+  font-size: 28px;
+}
+
+h1, h2 {
+  font-family: "Yanone Kaffeesatz";
+  text-rendering: optimizeLegibility;
+}
+
+#body > p {
+  line-height: 1.5em;
+  width: 640px;
+  text-rendering: optimizeLegibility;
+}
+
+#charts {
+  padding: 10px 0;
+}
+
+.chart {
+  display: inline-block;
+  height: 151px;
+  margin-bottom: 20px;
+}
+
+.reset {
+  padding-left: 1em;
+  font-size: smaller;
+  color: #ccc;
+}
+
+.background.bar {
+  fill: #ccc;
+}
+
+.foreground.bar {
+  fill: steelblue;
+}
+
+.axis path, .axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+.axis text {
+  font: 10px sans-serif;
+}
+
+.brush rect.extent {
+  fill: steelblue;
+  fill-opacity: .125;
+}
+
+.brush .resize path {
+  fill: #eee;
+  stroke: #666;
+}
+
+#completion-chart {
+  width: 920px;
+}
+
+#attrition-chart {
+  width: 920px;
+}
+
+#certification-chart {
+  width: 920px;
+}
+
+#date-chart {
+  width: 920px;
+}
+
+#student-list .all-students {
+  height: 200px;
+  overflow-y:scroll;
+}
+
+#student-list .all-students,
+#student-list .day {
+  margin-bottom: .4em;
+}
+
+#student-list .student {
+  line-height: 1.5em;
+  background: #eee;
+  width: 650px;
+  margin-bottom: 1px;
+}
+
+#student-list .student div {
+  display: inline-block;
+  width: 100px;
+  /*text-align: center;*/
+  padding-left: 50px;
+}
+
+#student-list div.anon-student {
+  color: #999;
+  width: 150px;
+}
+
+#student-list .early {
+  color: green;
+}
+
+aside {
+  font-size: smaller;
+  float:right;
+}
+
+.radios {
+  padding-bottom: 20px;
+}
+
+/* Dropdown Button */
+.dropbtn {
+    background-color: #4CAF50;
+    color: white;
+    padding: 16px;
+    font-size: 16px;
+    border: none;
+    cursor: pointer;
+}
+
+/* Dropdown button on hover & focus */
+.dropbtn:hover, .dropbtn:focus {
+    background-color: #3e8e41;
+}
+
+/* The container <div> - needed to position the dropdown content */
+.dropdown {
+    position: relative;
+    display: inline-block;
+    float:right;
+}
+
+/* Dropdown Content (Hidden by Default) */
+.dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: #f9f9f9;
+    min-width: 160px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    z-index: 1;
+}
+
+/* Links inside the dropdown */
+.dropdown-content p {
+    color: black;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+}
+
+/* Change color of dropdown links on hover */
+.dropdown-content p:hover {background-color: #f1f1f1}
+
+/* Show the dropdown menu (use JS to add this class to the .dropdown-content container when the user clicks on the dropdown button) */
+.show {display:block;}
+
+
+
+/* The Modal (background) */
+/*.modal {
+    display: none;
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgb(0,0,0);
+    background-color: rgba(0,0,0,0.4);
+}*/
+
+/* Modal Content/Box */
+/*.modal-content {
+    background-color: #fefefe;
+    margin: 15% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 30%;
+}*/
+
+/* The Close Button */
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+
+/* Tooltip container */
+.tooltip {
+    position: relative;
+    display: inline-block;
+    border-bottom: 1px dotted black; /* If you want dots under the hoverable text */
+}
+
+/* Tooltip text */
+.tooltip .tooltiptext {
+    visibility: hidden;
+    width: 120px;
+    background-color: black;
+    color: #fff;
+    text-align: center;
+    padding: 5px 0;
+    border-radius: 6px;
+
+    /* Position the tooltip text - see examples below! */
+    position: absolute;
+    z-index: 1;
+}
+
+/* Show the tooltip text when you mouse over the tooltip container */
+.tooltip:hover .tooltiptext {
+    visibility: visible;
+}
+
+#automated:hover {
+
+}
+
+
+</style>
+
+<div id="body">
+
+  <h1 style="margin-bottom:0.5em;">Communicator</h1>
+  <h3>Select recipients by:</h3>
+
+  <form class="radios">
+  <div>
+    <input type="radio" id="intRadio" name="type" value="intervention" checked="checked" style="width:50px; height:20px;">Analytics
+    <input type="radio" id="annRadio" name="type" value="announcement" style="width:50px; height:20px;">All Learners
+  </div>
+</form>
+
+<!-- <div class="dropdown">
+  <button onclick="toggleDropdown()" class="dropbtn" style="width:165px;">Load Past Communications</button>
+  <div id="myDropdown" class="dropdown-content" style="height:300px; overflow:scroll;">
+  </div>
+</div> -->
+
+<select id="myDropdown" onchange="optSelected(this.value)" style="float:left;"></select>
+
+<!-- <button type="button" id="test">Test</button> -->
+<button type="button" id="test2">Test2</button>
+
+  <div id="intervention" style="display:block;">
+
+    <h2 id="policyName" style="display:none;">Policy Name<h2>
+
+    <p style="float:left; clear:left;">Learner selection groups to try:
+      <button type="button" id="comp-no-cert">Complete But No Certificate</button>
+      <button type="button" id="attr-no-comp-cert">Attrit But No Complete/Certificate</button>
+    </p>
+
+    <div id="charts">
+      <div id="completion-chart" class="chart">
+        <div class="title">Completion % chance</div>
+      </div>
+      <div id="attrition-chart" class="chart">
+        <div class="title">Attrition % chance</div>
+      </div>
+      <div id="certification-chart" class="chart">
+        <div class="title">Certification % chance</div>
+      </div>
+    </div>
+
+    <aside id="totals"><span id="active">-</span><span id="percentage"></span> of <span id="total">-</span> learners selected</aside>
+
+    <div id="lists">
+      <div id="student-list" class="list" style="display:none;">
+        <div>
+          <div style="width:200px; display:inline-block">Anonymized Student ID</div>
+          <div style="width:150px; display:inline-block">Completion %</div>
+          <div style="width:150px; display:inline-block">Attrition %</div>
+          <div style="width:150px; display:inline-block">Certification %</div>
+      </div>
+    </div>
+    </div>
+
+</div>
+
+<form style="border-style:solid; padding: 20px; margin-top:50px;">
+  <br>
+  <h4>Compose Email</h4>
+  <h6 id="recipients" style="font-family:Open-Sans; font-size:16px; font-weight:100;"></h6>
+  <h6 id="all-recipients" style="font-family:Open-Sans; font-size:16px; font-weight:100;display:none;"></h6>
+
+  <input id="from-name" type="text" placeholder="Instructor Name" style="width:250px;">
+  <h6>From "Name"</h6>
+
+  <input id="reply-to" type="text" placeholder="Instructor Email Address" style="width:250px;">
+  <h6>From "Email"</h6>
+
+  <input id="email-subject" type="text" placeholder="Subject" style="width:250px;">
+  <h6>Subject</h6>
+
+  <textarea id="email-body" style="width:500px; height: 100px" placeholder="Use [:fullname:] to insert learner's full name and [:firstname:] to insert learner's last name"></textarea>
+  <h6>Body</h6>
+
+  <br>
+  <button type="button" id="emailButton">Send email to selected learners</button>
+  <input id="automated" type="checkbox" style="margin-right: 10px; margin-left: 50px; display:inline; width:16px; height:16px"><p id="automated2" style="display:inline;">Automatically check for and send to new matches found daily<p>
+  <p id="tip" style="color:#B72667; width:500px; display:none;">Tip: Enabling the check will send emails to all of the new matches since this communication was first sent.</p>
+  <p>*Please check the maximum daily recipient limit of your email provider. For example, Gmail is 500 per day.*</p>
+</form>
+
+<button type="button" id="saveChanges" style="display:none; background:#00A0E3; float:right; color: white; margin:25px; width:200px; height:50px">Save Changes</button>
+
+<!-- Trigger/Open The Modal -->
+<!-- <button id="modalBtn">Save</button> -->
+
+<!-- The Modal -->
+<!-- <div id="myModal" class="modal"> -->
+
+  <!-- Modal content -->
+  <!-- <div class="modal-content">
+    <span class="close">&times;</span>
+    <form>
+      <h4>Name</h4>
+      <input id="policy-name" type="text" value="Policy Name">
+      <button type="button" id="policy-save">Save Policy</button>
+    </form>
+  </div> -->
+
+<!-- </div> -->
+<!-- <button type="button" id="saveChanges" style="display:none;">Delete</button> -->
+<!-- <button type="button" id="automated">Automated</button> -->
+
+<script>
+
+window.filterLimits = {
+  'certification-chart': [0, 100],
+  'attrition-chart': [0, 100],
+  'completion-chart': [0, 100]
+};
+function loadData(error, students) {
+  if (error) {
+    console.log(error);
+    alert("Could not load student data");
+    return;
+  }
+  // Various formatters.
+  var formatNumber = d3.format(",d"),
+      formatChange = d3.format("+,d"),
+      formatDate = d3.time.format("%B %d, %Y"),
+      formatTime = d3.time.format("%I:%M %p");
+
+  // A nest operator, for grouping the flight list.
+  var nestByDate = d3.nest()
+      .key(function(d) { return 'Test'; });
+
+  // A little coercion, since the CSV is untyped.
+  students.forEach(function(d, i) {
+    d.index = i;
+    d.completion_prediction = +d.completion_prediction;
+    d.attrition_prediction = +d.attrition_prediction;
+    d.certification_prediction = +d.certification_prediction;
+  });
+
+  // Create the crossfilter for the relevant dimensions and groups.
+  var student = crossfilter(students),
+      all = student.groupAll(),
+      anon_user_id = student.dimension(function(d) {return d.anon_user_id}),
+      completion = student.dimension(function(d) {return d.completion_prediction; }),
+      completions = completion.group(Math.floor),
+      attrition = student.dimension(function(d) {return d.attrition_prediction; }),
+      attritions = attrition.group(Math.floor),
+      certification = student.dimension(function(d) {return d.certification_prediction; }),
+      certifications = certification.group(Math.floor);
+
+  var charts = [
+
+    barChart()
+        .dimension(completion)
+        .group(completions)
+      .x(d3.scale.linear()
+        .domain([0, 100])
+        .rangeRound([0, 900])),
+        // .rangeRound([0, 10 * 24])),
+
+    barChart()
+        .dimension(attrition)
+        .group(attritions)
+      .x(d3.scale.linear()
+        .domain([0, 100])
+        .rangeRound([0, 900])),
+        // .rangeRound([0, 10 * 21])),
+
+    barChart()
+        .dimension(certification)
+        .group(certifications)
+      .x(d3.scale.linear()
+        .domain([0, 100])
+        .rangeRound([0, 900])) //,
+
+  ];
+
+  var chart = d3.selectAll(".chart")
+      .data(charts)
+      .each(function(chart) { chart.on("brush", renderAll).on("brushend", renderAll); });
+
+  // Render the initial lists.
+  var list = d3.selectAll(".list")
+      .data([studentList]);
+
+  // Render the total.
+  d3.selectAll("#total")
+      .text(formatNumber(student.size()));
+
+  renderAll();
+
+  // make all learners receipients always be all students
+  d3.select("#all-recipients").text("Recipients: " + formatNumber(student.size()) + " Learners");
+
+  // Renders the specified chart or list.
+  function render(method) {
+    d3.select(this).call(method);
+  }
+
+  // Whenever the brush moves, re-rendering everything.
+  function renderAll() {
+    chart.each(render);
+    list.each(render);
+    d3.select("#active").text(formatNumber(all.value()));
+    d3.select("#percentage").text(" (%" + formatNumber(Math.round(all.value() * 100.0 / student.size())) + ")");
+    d3.select("#recipients").text("Recipients: " + formatNumber(all.value()) + " Learners");
+  }
+
+  // Like d3.time.format, but faster.
+  function parseDate(d) {
+    return new Date(2001,
+        d.substring(0, 2) - 1,
+        d.substring(2, 4),
+        d.substring(4, 6),
+        d.substring(6, 8));
+  }
+
+  window.filter = function(filters) {
+    filters.forEach(function(d, i) { charts[i].filter(d); });
+    renderAll();
+  };
+
+  window.reset = function(i) {
+    charts[i].filter(null);
+    renderAll();
+  };
+
+  function studentList(div) {
+    window.selectedStudents = anon_user_id.top(Infinity);
+    // Note studentsByDate is just a hack of flightsByDate from original
+    var studentsByDate = nestByDate.entries(anon_user_id.top(Infinity));
+    //
+    div.each(function() {
+      var date = d3.select(this).selectAll(".all-students")
+          .data(studentsByDate, function(d) { return d.key; });
+
+      date.enter().append("div")
+          .attr("class", "all-students")
+        .append("div")
+          .attr("class", "day")
+          .text(function(d) { return ""; });
+
+      date.exit().remove();
+
+      var student = date.order().selectAll(".student")
+          .data(function(d) { return d.values; }, function(d) { return d.index; });
+
+      var studentEnter = student.enter().append("div")
+          .attr("class", "student");
+
+      studentEnter.append("div")
+          .attr("class", "anon-student")
+          .text(function(d) { return d.anon_user_id; });
+
+      studentEnter.append("div")
+          .attr("class", "completion")
+          .text(function(d) { return d.completion_prediction; });
+
+      studentEnter.append("div")
+          .attr("class", "attrition")
+          .text(function(d) { return d.attrition_prediction; });
+
+      studentEnter.append("div")
+          .attr("class", "certification")
+          .text(function(d) { return d.certification_prediction; });
+
+      student.exit().remove();
+
+      student.order();
+    });
+  }
+
+  function barChart() {
+    if (!barChart.id) barChart.id = 0;
+
+    var margin = {top: 10, right: 10, bottom: 20, left: 10},
+        x,
+        y = d3.scale.linear().range([100, 0]),
+        id = barChart.id++,
+        axis = d3.svg.axis().orient("bottom"),
+        brush = d3.svg.brush(),
+        brushDirty,
+        dimension,
+        group,
+        round;
+
+    function chart(div) {
+      var width = x.range()[1],
+          height = y.range()[0];
+
+      y.domain([0, group.top(1)[0].value]);
+
+      div.each(function() {
+        var div = d3.select(this),
+            g = div.select("g");
+
+        // Create the skeletal chart.
+        if (g.empty()) {
+          div.select(".title").append("a")
+              .attr("href", "javascript:reset(" + id + ")")
+              .attr("class", "reset")
+              .text("reset")
+              .style("display", "none");
+
+          g = div.append("svg")
+              .attr("width", width + margin.left + margin.right)
+              .attr("height", height + margin.top + margin.bottom)
+            .append("g")
+              .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+          g.append("clipPath")
+              .attr("id", "clip-" + id)
+            .append("rect")
+              .attr("width", width)
+              .attr("height", height);
+
+          g.selectAll(".bar")
+              .data(["background", "foreground"])
+            .enter().append("path")
+              .attr("class", function(d) { return d + " bar"; })
+              .datum(group.all());
+
+          g.selectAll(".foreground.bar")
+              .attr("clip-path", "url(#clip-" + id + ")");
+
+          g.append("g")
+              .attr("class", "axis")
+              .attr("transform", "translate(0," + height + ")")
+              .call(axis);
+
+          // Initialize the brush component with pretty resize handles.
+          var gBrush = g.append("g").attr("class", "brush").call(brush);
+          gBrush.selectAll("rect").attr("height", height);
+          gBrush.selectAll(".resize").append("path").attr("d", resizePath);
+        }
+
+        // Only redraw the brush if set externally.
+        if (brushDirty) {
+          brushDirty = false;
+          g.selectAll(".brush").call(brush);
+          div.select(".title a").style("display", brush.empty() ? "none" : null);
+          if (brush.empty()) {
+            g.selectAll("#clip-" + id + " rect")
+                .attr("x", 0)
+                .attr("width", width);
+          } else {
+            var extent = brush.extent();
+            g.selectAll("#clip-" + id + " rect")
+                .attr("x", x(extent[0]))
+                .attr("width", x(extent[1]) - x(extent[0]));
+          }
+        }
+
+        g.selectAll(".bar").attr("d", barPath);
+      });
+
+      function barPath(groups) {
+        var path = [],
+            i = -1,
+            n = groups.length,
+            d;
+        while (++i < n) {
+          d = groups[i];
+          path.push("M", x(d.key), ",", height, "V", y(d.value), "h9V", height);
+        }
+        return path.join("");
+      }
+
+      function resizePath(d) {
+        var e = +(d == "e"),
+            x = e ? 1 : -1,
+            y = height / 3;
+        return "M" + (.5 * x) + "," + y
+            + "A6,6 0 0 " + e + " " + (6.5 * x) + "," + (y + 6)
+            + "V" + (2 * y - 6)
+            + "A6,6 0 0 " + e + " " + (.5 * x) + "," + (2 * y)
+            + "Z"
+            + "M" + (2.5 * x) + "," + (y + 8)
+            + "V" + (2 * y - 8)
+            + "M" + (4.5 * x) + "," + (y + 8)
+            + "V" + (2 * y - 8);
+      }
+    }
+
+    brush.on("brushstart.chart", function() {
+      var div = d3.select(this.parentNode.parentNode.parentNode);
+      div.select(".title a").style("display", null);
+    });
+
+    brush.on("brush.chart", function() {
+      var g = d3.select(this.parentNode),
+          extent = brush.extent();
+      if (round) g.select(".brush")
+          .call(brush.extent(extent = extent.map(round)))
+        .selectAll(".resize")
+          .style("display", null);
+      g.select("#clip-" + id + " rect")
+          .attr("x", x(extent[0]))
+          .attr("width", x(extent[1]) - x(extent[0]));
+      dimension.filterRange(extent);
+      // Get name of chart and limits for that chart
+      window.filterLimits[g.node().parentNode.parentNode.id] = extent;
+    });
+
+    brush.on("brushend.chart", function() {
+      if (brush.empty()) {
+        var div = d3.select(this.parentNode.parentNode.parentNode);
+        div.select(".title a").style("display", "none");
+        div.select("#clip-" + id + " rect").attr("x", null).attr("width", "100%");
+        dimension.filterAll();
+      }
+    });
+
+    chart.margin = function(_) {
+      if (!arguments.length) return margin;
+      margin = _;
+      return chart;
+    };
+
+    chart.x = function(_) {
+      if (!arguments.length) return x;
+      x = _;
+      axis.scale(x);
+      brush.x(x);
+      return chart;
+    };
+
+    chart.y = function(_) {
+      if (!arguments.length) return y;
+      y = _;
+      return chart;
+    };
+
+    chart.dimension = function(_) {
+      if (!arguments.length) return dimension;
+      dimension = _;
+      return chart;
+    };
+
+    chart.filter = function(_) {
+      if (_) {
+        brush.extent(_);
+        dimension.filterRange(_);
+      } else {
+        brush.clear();
+        dimension.filterAll();
+      }
+      brushDirty = true;
+      return chart;
+    };
+
+    chart.group = function(_) {
+      if (!arguments.length) return group;
+      group = _;
+      return chart;
+    };
+
+    chart.round = function(_) {
+      if (!arguments.length) return round;
+      round = _;
+      return chart;
+    };
+
+    return d3.rebind(chart, brush, "on");
+  }
+}
+
+// (It's CSV, but GitHub Pages only gzip's JSON at the moment.)
+function drawGraphs(dataUrl, json) {
+  if (json) {
+    d3.json(dataUrl);
+  } else {
+    d3.csv(dataUrl).header("Authorization", "Basic " + btoa("john:secret")).get(loadData);
+    // d3.csv(dataUrl, loadData);
+  }
+}
+
+var ids;
+
+function getIDs(callback) {
+  ids = [];
+  // ids = '';
+  for (i = 0; i < $('.anon-student').length; i++) {
+      ids.push($('.anon-student')[i].innerHTML);
+      // ids += ($('.anon-student')[i].innerHTML) + ' ';
+  }
+  console.log(ids);
+  callback();
+}
+
+function send_emails () {
+  var ann = ($('#annRadio').attr("checked") === "checked");
+  var settings = {
+    "async": true,
+    "crossDomain": true,
+    "url": "https://cahl.berkeley.edu:1337/api/email",
+    "method": "POST",
+    "data":
+    {
+      "ids": ids,
+      "subject": $('#email-subject').attr('value'),
+      "body": $('#email-body').attr('value'),
+      "reply": $('#reply-to').attr('value'),
+      "from": $('#from-name').attr('value'),
+      "pass": "sadfvkn88asVLS891",
+      "ann": ann
+    },
+    success: function(response) {
+      console.log("Successfully sent!");
+      alert("Successfully sent!");
+    }
+  };
+  $.ajax(settings);
+}
+
+function toggleDropdown() {
+    document.getElementById("myDropdown").classList.toggle("show");
+}
+
+// Close the dropdown menu if the user clicks outside of it
+window.onclick = function(event) {
+  if (!event.target.matches('.dropbtn')) {
+
+    var dropdowns = document.getElementsByClassName("dropdown-content");
+    var i;
+    for (i = 0; i < dropdowns.length; i++) {
+      var openDropdown = dropdowns[i];
+      if (openDropdown.classList.contains('show')) {
+        openDropdown.classList.remove('show');
+      }
+    }
+  }
+}
+
+
+
+function get_interventions () {
+var settings = {
+  "async": true,
+  "crossDomain": true,
+  "url": "https://cahl.berkeley.edu:1337/api/interventions",
+  "method": "GET",
+  success: function(response) {
+    var myDropdown = document.getElementById('myDropdown');
+    myDropdown.innerHTML = '';
+
+    var load = document.createElement("option");
+    load.selected = true;
+    load.disabled = true;
+    load.text = "Load Past Communications";
+    myDropdown.appendChild(load);
+
+    for (var p in response) {
+      var policy = document.createElement("option");
+      var formatted_date = new Date(response[p].timestamp).toDateString().split(" ")
+      var final_display = formatted_date[1] + " " + formatted_date[2] + " " + formatted_date[3] + " - " + response[p].name;
+      if (response[p].auto === "true") {
+        final_display = "(Active) " + final_display;
+      }
+      policy.innerHTML = final_display;
+      policy.setAttribute("id", response[p].name);
+      policy.setAttribute("value", JSON.stringify(response[p]));
+      myDropdown.appendChild(policy);
+    }
+  }
+};
+$.ajax(settings);
+}
+
+function optSelected (response) {
+  var response = JSON.parse(response);
+  filter([response.comp, response.attr, response.cert]);
+  $('#email-subject').attr('value', response.subject);
+  $('#email-body').attr('value', response.body);
+  $('#reply-to').attr('value', response.reply);
+  $('#from-name').attr('value', response.from);
+  $('#policyName').text(response.name);
+  if (response.auto === "true") {
+    $('#automated').attr('checked', true);
+  }
+  $('#saveChanges').css('display', 'inline-block');
+}
+
+function get_announcements () {
+var settings = {
+  "async": true,
+  "crossDomain": true,
+  "url": "https://cahl.berkeley.edu:1337/api/announcements",
+  "method": "GET",
+  success: function(response) {
+    var myDropdown = document.getElementById('myDropdown');
+    myDropdown.innerHTML = '';
+
+    var load = document.createElement("option");
+    load.selected = true;
+    load.disabled = true;
+    load.text = "Load Past Communications";
+    myDropdown.appendChild(load);
+
+    for (var p in response) {
+      var policy = document.createElement("option");
+      var formatted_date = new Date(response[p].timestamp).toDateString().split(" ")
+      var final_display = formatted_date[1] + " " + formatted_date[2] + " " + formatted_date[3] + " - " + response[p].name;
+      policy.innerHTML = final_display;
+      policy.setAttribute("id", response[p].name);
+      policy.setAttribute("value", JSON.stringify(response[p]));
+      myDropdown.appendChild(policy);
+    }
+  }
+};
+$.ajax(settings);
+}
+
+
+function send_policy () {
+  var comp = window.filterLimits["completion-chart"];
+  var attr = window.filterLimits["attrition-chart"];
+  var cert = window.filterLimits["certification-chart"];
+
+  var automated = ($('#automated').attr("checked") === "checked");
+  console.log("automated: " + automated);
+  var intervention = ($('#intRadio').attr("checked") === "checked");
+
+  var settings = {
+    "async": true,
+    "crossDomain": true,
+    "url": "https://cahl.berkeley.edu:1337/api/save",
+    "method": "POST",
+    "data":
+    {
+      "ids": ids,
+      "subject": $('#email-subject').attr('value'),
+      "body": $('#email-body').attr('value'),
+      "reply": $('#reply-to').attr('value'),
+      "name": $('#email-subject').attr('value'),
+      "from": $('#from-name').attr('value'),
+      "comp": comp,
+      "attr": attr,
+      "cert": cert,
+      "auto": automated,
+      "timestamp": new Date(),
+      "intervention": intervention
+    },
+    success: function(response) {
+      console.log("Policy Successfully sent!");
+      alert("Policy Saved!");
+    }
+  };
+  $.ajax(settings);
+}
+
+
+function save_changes () {
+  console.log("starting save");
+  var comp = window.filterLimits["completion-chart"];
+  var attr = window.filterLimits["attrition-chart"];
+  var cert = window.filterLimits["certification-chart"];
+  var automated = ($('#automated').attr("checked") === "checked");
+
+  var settings = {
+    "async": true,
+    "crossDomain": true,
+    "url": "https://cahl.berkeley.edu:1337/api/changes",
+    "method": "POST",
+    "data":
+    {
+      "name": $('#policyName')[0].innerHTML,
+      "ids": ids,
+      "subject": $('#email-subject').attr('value'),
+      "body": $('#email-body').attr('value'),
+      "reply": $('#reply-to').attr('value'),
+      "from": $('#from-name').attr('value'),
+      "comp": comp,
+      "attr": attr,
+      "cert": cert,
+      "auto": automated
+    },
+    success: function(response) {
+      console.log("Policy Successfully Saved!");
+    }
+  };
+  $.ajax(settings);
+}
+
+window.onload = function() {
+  drawGraphs("https://cahl.berkeley.edu:1337/api/predictions");
+  get_interventions();
+  $('#emailButton').on('click', function() {
+    if ($('#intRadio').attr("checked") === "checked") {
+      if (confirm("Are you sure you want to send this email to " + window.selectedStudents.length + " students?")) {
+        getIDs(send_emails);
+        getIDs(send_policy);
+        get_interventions();
+      }
+    }
+    else {
+      if (confirm("Are you sure you want to send this email to " + $('#total')[0].innerHTML + " students?")) {
+        getIDs(send_emails);
+        getIDs(send_policy);
+        get_announcements();
+      }
+    }
+  });
+  $('#comp-no-cert').on('click', function() {
+    filter([[80, 100], null, [0, 20]]);
+  });
+  $('#attr-no-comp-cert').on('click', function() {
+    filter([[0,70], [80, 100], [0, 70]]);
+  });
+  $('#annRadio').on('click', function() {
+    get_announcements();
+    $('#intervention').css('display', 'none');
+    $('#automated').css('display', 'none');
+    $('#automated2').css('display', 'none');
+    $('#all-recipients').css('display', 'block');
+    $('#recipients').css('display', 'none');
+  });
+  $('#intRadio').on('click', function() {
+    get_interventions();
+    $('#intervention').css('display', 'block');
+    // $('#modalBtn').css('display', 'block');
+    $('#automated').css('display', 'inline');
+    $('#automated2').css('display', 'inline');
+    $('#automated').attr('checked', false);
+    $('#all-recipients').css('display', 'none');
+    $('#recipients').css('display', 'block');
+  });
+  $('#test').on('click', function() {
+    getIDs(send_policy);
+    get_announcements();
+  });
+  $('#test2').on('click', function() {
+    getIDs(send_policy);
+    get_interventions();
+  });
+  $('#saveChanges').on('click', function() {
+    getIDs(save_changes);
+    var toDelete = $('#policyName').text();
+    $('#' + toDelete).remove();
+    $('#policyName').text('');
+  });
+  $("#automated").hover(
+    function() {
+        $("#tip").show();
+    },
+    function() {
+        $("#tip").hide();
+    }
+  );
+};
+
+
+
+</script>
