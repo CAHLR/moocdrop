@@ -115,7 +115,7 @@ router.route('/email')
           var id = ids[j];
           if (id in anon_to_email) {
               var message_body = req.body.body;
-              var from = "'" + req.body.from + " <" + gmailUsername +">'";
+              var from = "'" + req.body.from + " <" + "random@email.com" +">'";
               console.log(from);
 
               if (anon_to_email[id].first) {
