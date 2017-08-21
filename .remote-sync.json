@@ -10,9 +10,9 @@
     ".git/**"
   ],
   "watch":[
-    "/chris/server.js",
-    "/chris/automated.py",
-    "/chris/test_pred.csv",
-    "/chris/test.csv"
+    "/server.js",
+    "/automated.py",
+    "/test_pred.csv",
+    "/test.csv"
   ]
 }
