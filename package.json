@@ -1,5 +1,6 @@
 {
   "name": "moocdrop",
+  "private": true,
   "dependencies": {
     "basic-auth": "~1.1.0",
     "body-parser": "~1.15.1",
@@ -9,5 +10,6 @@
     "nodemailer": "~2.7.0",
     "morgan": "~1.7.0",
     "serve-favicon": "~2.3.0",
+    "jquery": "~3.1.1",
   }
 }
