@@ -5,12 +5,9 @@
   "dependencies": {
     "basic-auth": "~1.1.0",
     "body-parser": "~1.15.1",
-    "csvtojson": "~1.1.7",
-    "debug": "~2.2.0",
     "express": "~4.13.4",
     "nodemailer": "~2.7.0",
-    "morgan": "~1.7.0",
-    "serve-favicon": "~2.3.0",
-    "jquery": "~3.1.1"
+    "jquery": "~3.1.1",
+    "mongoose": "~4.6.0"
   }
 }
