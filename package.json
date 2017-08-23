@@ -1,6 +1,6 @@
 {
   "name": "moocdrop",
-  "private": true,
+  "private": false,
   "main": "server.js",
   "dependencies": {
     "basic-auth": "~1.1.0",
