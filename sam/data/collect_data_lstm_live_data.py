@@ -47,7 +47,7 @@ def generate_ordered_event_copy(event_log_file_name):
 
 
 def parse_event(data):
-	"""
+    """
     Takes in an individual action event and returns the event type it corresponds to
     """
     try:
@@ -151,11 +151,11 @@ def parse_event(data):
                      parsed_event = 'problem_check_incorrect'
             except:
                 parsed_event = 'problem_check_incorrect'
-        return parsed_event 
+        return parsed_event
     except:
         print ("Found this event for the first time, skipping it for now")
         pass
-        
+
 
 
 def get_ce_types():
@@ -165,7 +165,7 @@ def get_ce_types():
     return {etype: i for i, etype in enumerate(event_list)}
 
 #student sort by username
-def stusort(timedat): 
+def stusort(timedat):
     '''Group time-sorted data by student:
        returned: {'stuX':[dict_time0, dict_time3, dict_time4],
                   'stuY':[dict_time1, dict_time2], ...}

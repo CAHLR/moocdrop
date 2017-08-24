@@ -7,14 +7,14 @@ from keras.preprocessing import sequence
 import pandas as pd
 import os
 import sys
-
+ 
 #files uses to pull course information and course users
 log_file = "berkeleyx-edx-cs169-2x-events.log"
 course = "BerkeleyX-CS169.2x-1T2017"
 
 #input = event_log_file_name as address to the log file
 #output = stores log in ordered format at ORDERED_event_log_file_name
-collect_data_lstm.generate_ordered_event_copy(log_file)
+collect_data_lstm_live_data.generate_ordered_event_copy(log_file)
 
 ordered_course_file_log = 'ORDERED_'+log_file
 with open(ordered_course_file_log) as f:
@@ -46,7 +46,7 @@ events_df = pd.DataFrame({'username': list(event_stream_per_student.keys()), 'se
 
 # For CS169, user action ceiling chosen as 7000 and |types of actions| == 88
 max_seq_len = 7000
-max_input_dim = 88 
+max_input_dim = 88
 events_df.reset_index(drop=True, inplace=True)
 events_df.reindex(np.random.permutation(events_df.index))
 event_list = events_df['seq'].values

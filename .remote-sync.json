@@ -13,6 +13,8 @@
     "/server.js",
     "/automated.py",
     "/test_pred.csv",
-    "/test.csv"
+    "/test.csv",
+    "/sam/data/collect_data_lstm_live_data.py",
+    "/sam/data/event_log_prediction.py"
   ]
 }

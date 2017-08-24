@@ -35,10 +35,10 @@ fs.readFile(index_csv, 'UTF-8', function(err, csv) {
           all_ids.push(data[i][1]);
           anon_to_email[data[i][1]] = {'email': data[i][3]}; // email
           if (data[i][4]) {
-            anon_to_email[data[i][1]].first = data[i][4]; // first name
+            anon_to_email[data[i][1]].first = data[i][4].toUpperCase(); // first name
           }
           if (data[i][5]) {
-            anon_to_email[data[i][1]].last = data[i][5]; // last name
+            anon_to_email[data[i][1]].last = data[i][5].toUpperCase(); // last name
           }
       }
       else {
