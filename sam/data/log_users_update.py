@@ -9,7 +9,7 @@ import numpy as np
 # read in files
 student_details = pd.DataFrame(pd.read_table('BerkeleyX-CS169.2x-1T2017SP-auth_user-prod-analytics.sql'))
 student_anon = pd.DataFrame(pd.read_table('BerkeleyX-CS169.2x-1T2017SP-student_anonymoususerid-prod-analytics.sql'))
-student_details = pd.concat([student_details,student_details_1x])
+student_details = pd.concat([student_details,student_anon])
 student_details = student_details.loc[:,['first_name','last_name', 'id','username','email']]
 student_details = student_details.drop_duplicates().reset_index(drop=True)
 
