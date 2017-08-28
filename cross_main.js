@@ -93,7 +93,7 @@ function loadData(error, students) {
     chart.each(render);
     list.each(render);
     d3.select("#active").text(formatNumber(all.value()));
-    d3.select("#percentage").text(" (%" + formatNumber(Math.round(all.value() * 100.0 / student.size())) + ")");
+    d3.select("#percentage").text(" (" + formatNumber(Math.round(all.value() * 100.0 / student.size())) + "%)");
     d3.select("#recipients").text("Recipients: " + formatNumber(all.value()) + " Learners");
   }
 

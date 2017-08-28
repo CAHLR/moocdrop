@@ -7,7 +7,7 @@ from keras.preprocessing import sequence
 import pandas as pd
 import os
 import sys
- 
+
 #files uses to pull course information and course users
 log_file = "berkeleyx-edx-cs169-2x-events.log"
 course = "BerkeleyX-CS169.2x-1T2017"
@@ -21,19 +21,19 @@ with open(ordered_course_file_log) as f:
 	ordered_event_list = f.readlines()
 
 #outputs actions chronologically sorted by each student
-student_sorted = collect_data_lstm.stusort(ordered_event_list)
+student_sorted = collect_data_lstm_live_data.stusort(ordered_event_list)
 
 #convert student sorted actions into sequence of integers
 if not os.path.exists("RNN_event_list.csv"):
-    raise Error("No list of RNN Events")
+    raise IOError("No list of RNN Events")
 
 event_stream_per_student = defaultdict(list)
-ce_types = collect_data_lstm.get_ce_types()
+ce_types = collect_data_lstm_live_data.get_ce_types()
 # Get events from log_file
 for u_name, actions in student_sorted.items():
     for line in actions:
         try:
-            parsed_event = collect_data_lstm.parse_event(line)
+            parsed_event = collect_data_lstm_live_data.parse_event(line)
         except ValueError:
         	#unable to parse action
             print(line)
@@ -57,19 +57,19 @@ x_train = sequence.pad_sequences(event_list_binary, maxlen=max_seq_len, dtype='i
 
 #load model weights
 #returns the probability the student will attrit after 2 days of his last action
-attr_model = run_lstm_util.load_keras_weights_from_disk('../models', 'attr')
+attr_model = run_lstm_util_live_data.load_keras_weights_from_disk('models', 'attr')
 out = attr_model.predict(x_train)
 prediction = out[:, -1, 0]
 prediction = np.round(100 * prediction)
 events_df['attrition_prediction'] = prediction
 
-comp_model = run_lstm_util.load_keras_weights_from_disk('../models', 'comp')
+comp_model = run_lstm_util_live_data.load_keras_weights_from_disk('models', 'comp')
 out2 = comp_model.predict(x_train)
 prediction2 = out2[:, -1, 0]
 prediction2 = np.round(100 * prediction2)
 events_df['completion_prediction'] = prediction2
 
-cert_model = run_lstm_util.load_keras_weights_from_disk('../models', 'cert')
+cert_model = run_lstm_util_live_data.load_keras_weights_from_disk('models', 'cert')
 out3 = cert_model.predict(x_train)
 prediction3 = out3[:, -1, 0]
 prediction3 = np.round(100 * prediction3)
