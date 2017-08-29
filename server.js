@@ -48,7 +48,17 @@ fs.readFile(index_csv, 'UTF-8', function(err, csv) {
   });
 });
 
-var transporter = nodemailer.createTransport('smtps://' + gmailUsername + ':' + encodeURI(gmailPassword) + '@smtp.gmail.com');
+// var transporter = nodemailer.createTransport('smtps://' + gmailUsername + ':' + encodeURI(gmailPassword) + '@smtp.gmail.com', {pool:true, rateDelta:2000});
+var transporter = nodemailer.createTransport('smtps://' + 'postmaster@sandbox76804c9965674d70aa186801c11a401e.mailgun.org' + ':' + encodeURI('9443478548bc8bd3aba3d6debba802f6') + '@smtp.mailgun.org');
+
+// var my_auth = {
+//     api_key: 'key-32232600888e04931773e38650963a0e',
+//     domain: 'https://api.mailgun.net/v3/sandbox76804c9965674d70aa186801c11a401e.mailgun.org'
+// };
+// var transporter = nodemailer.createTransport({
+//     service: 'Mailgun',
+//     auth: my_auth
+//   });
 
 // These should exist on your server to use https
 var pkey = fs.readFileSync('/etc/ssl/cahl.key').toString();
@@ -119,9 +129,6 @@ router.route('/email')
               if (req.body.from) {
                 from = "'" + req.body.from + "'" + " <" + gmailUsername +">";
               }
-
-              console.log(from);
-
               if (anon_to_email[id].first) {
                 message_body = message_body.replace('[:firstname:]', anon_to_email[id].first);
               }
@@ -135,7 +142,9 @@ router.route('/email')
               else {
                 message_body = message_body.replace('[:fullname:]', '');
               }
-              message_body += "\n\nPlease do not repond to this email.";
+              if (req.body.from === "") {
+                message_body += "\n\nPlease do not repond to this email.";
+              }
               sendEmail(anon_to_email[id].email, from, req.body.subject, message_body, req.body.reply, myError);
           }
           else {
@@ -152,21 +161,21 @@ router.route('/email')
     });
 
 function sendEmail(email, from, subject, content, reply, cb) {
-    var mailOptions = {
-        from: from, // sender name and address
-        to: email, // list of receivers
-        subject: subject, // subject line
-        text: content, // plaintext body
-        replyTo: reply //replyTo address
-    };
+      var mailOptions = {
+          from: from, // sender name and address
+          to: email, // list of receivers
+          subject: subject, // subject line
+          text: content, // plaintext body
+          replyTo: reply //replyTo address
+      };
 
-    // send mail with defined transport object
-    transporter.sendMail(mailOptions, function(error, info){
-        if(error) {
-            cb(error);
-        }
-        cb(null);
-    });
+      // send mail with defined transport object
+      transporter.sendMail(mailOptions, function(error, info){
+          if(error) {
+              cb(error);
+          }
+          cb(null);
+      });
 }
 
 // Sends the prediction file to the client
