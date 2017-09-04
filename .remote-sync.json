@@ -12,8 +12,8 @@
   "watch":[
     "/server.js",
     "/automated.py",
-    "/test_pred.csv",
-    "/test.csv",
+    "/50_pred.csv",
+    "/50_users.csv",
     "/sam/data/collect_data_lstm_live_data.py",
     "/sam/data/event_log_prediction.py"
   ]

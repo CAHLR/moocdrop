@@ -1,3 +1,6 @@
+var secretUsername = 'UZVR050i5yGikbw';
+var secretPassword = 'y4x86hnRXUPLVMI';
+
 window.filterLimits = {
   'certification-chart': [0, 100],
   'attrition-chart': [0, 100],
@@ -361,7 +364,7 @@ function drawGraphs(dataUrl, json) {
   if (json) {
     d3.json(dataUrl);
   } else {
-    d3.csv(dataUrl).header("Authorization", "Basic " + btoa("john:secret")).get(loadData);
+    d3.csv(dataUrl).header("Authorization", "Basic " + btoa(secretUsername + ":" + secretPassword)).get(loadData);
     // d3.csv(dataUrl, loadData);
   }
 }

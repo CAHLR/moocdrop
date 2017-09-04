@@ -218,18 +218,23 @@ window.onload = function() {
   drawGraphs("https://cahl.berkeley.edu:1337/api/predictions");
   get_analytics();
   $('#emailButton').on('click', function() {
-    if ($('#analyticsRadio').attr("checked") === "checked") {
-      if (confirm("Are you sure you want to send this email to " + window.selectedStudents.length + " students?")) {
-        send_emails();
-        send_policy();
-        get_analytics();
-      }
+    if ($('#reply-to').attr('value') === "" || !($('#reply-to').attr('value').includes("@"))) {
+      alert("You have entered an invalid Instructor Email");
     }
     else {
-      if (confirm("Are you sure you want to send this email to " + $('#total')[0].innerHTML + " students?")) {
-        send_emails();
-        send_policy();
-        get_all();
+      if ($('#analyticsRadio').attr("checked") === "checked") {
+        if (confirm("Are you sure you want to send this email to " + window.selectedStudents.length + " students?")) {
+          send_emails();
+          send_policy();
+          get_analytics();
+        }
+      }
+      else {
+        if (confirm("Are you sure you want to send this email to " + $('#total')[0].innerHTML + " students?")) {
+          send_emails();
+          send_policy();
+          get_all();
+        }
       }
     }
   });

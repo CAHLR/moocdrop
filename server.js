@@ -14,15 +14,13 @@ var Policy     = require(process.cwd() + '/app/models/policy');
 var mongoose   = require('mongoose');
 mongoose.connect('mongodb://cahl.berkeley.edu:1304/policies'); // ******put a /events after port to save into that db
 
-// var csvWeekly = '../MASTER_user_info.csv';  // change this to location of email csv
-var csvWeekly = '50_users.csv';  // change this to location of email csv
-// var csvDaily = '/deepedu/research/moocdrop/live-data/prediction.csv'; // change this to location of prediction csv
-var csvDaily = '/deepedu/research/moocdrop/live-data/moocdrop/50_pred.csv';
+var csvWeekly = '../MASTER_user_info.csv';  // change this to location of email csv
+// var csvWeekly = '50_users.csv';  // change this to location of email csv
+var csvDaily = '/deepedu/research/moocdrop/live-data/prediction.csv'; // change this to location of prediction csv
+// var csvDaily = '/deepedu/research/moocdrop/live-data/moocdrop/50_pred.csv';
 
-var gmailUsername = 'berkeleyx.communications@gmail.com'; // change to the account you want to have sending emails
-var gmailPassword = 'AGfsdj45j&2jkfasdbjk$309vshadjkfhsadschsd32jhkjh!';
-var secretUsername = 'john';  // change: must be shared with client.html
-var secretPassword = 'secret'; // change: must be shared with client.html
+var secretUsername = 'UZVR050i5yGikbw';  // change: must be shared with cross_main.html
+var secretPassword = 'y4x86hnRXUPLVMI'; // change: must be shared with cross_main.html
 
 // making anonID to email dict
 var index_csv = csvWeekly;
@@ -35,7 +33,7 @@ fs.readFile(index_csv, 'UTF-8', function(err, csv) {
           all_ids.push(data[i][1]);
           anon_to_email[data[i][1]] = {'email': data[i][3]}; // email
           if (data[i][4]) {
-            anon_to_email[data[i][1]].first = data[i][4].toUpperCase; // first name
+            anon_to_email[data[i][1]].first = data[i][4]; // first name
           }
           if (data[i][5]) {
             anon_to_email[data[i][1]].last = data[i][5]; // last name
@@ -48,17 +46,19 @@ fs.readFile(index_csv, 'UTF-8', function(err, csv) {
   });
 });
 
-// var transporter = nodemailer.createTransport('smtps://' + gmailUsername + ':' + encodeURI(gmailPassword) + '@smtp.gmail.com', {pool:true, rateDelta:2000});
-var transporter = nodemailer.createTransport('smtps://' + 'postmaster@sandbox76804c9965674d70aa186801c11a401e.mailgun.org' + ':' + encodeURI('9443478548bc8bd3aba3d6debba802f6') + '@smtp.mailgun.org');
+var masquerading = true;
+var transporter;
+var emailUsername;
+var emailPassword;
 
-// var my_auth = {
-//     api_key: 'key-32232600888e04931773e38650963a0e',
-//     domain: 'https://api.mailgun.net/v3/sandbox76804c9965674d70aa186801c11a401e.mailgun.org'
-// };
-// var transporter = nodemailer.createTransport({
-//     service: 'Mailgun',
-//     auth: my_auth
-//   });
+if (masquerading) {
+    transporter = nodemailer.createTransport('smtps://' + 'postmaster@sandbox76804c9965674d70aa186801c11a401e.mailgun.org' + ':' + encodeURI('9443478548bc8bd3aba3d6debba802f6') + '@smtp.mailgun.org');
+}
+else {
+  emailUsername = 'email username here'; // change to the account you want to have sending emails
+  emailPassword = 'email password here';
+  transporter = nodemailer.createTransport('smtps://' + emailUsername + ':' + encodeURI(emailPassword) + '@smtp.email.com');
+}
 
 // These should exist on your server to use https
 var pkey = fs.readFileSync('/etc/ssl/cahl.key').toString();
@@ -121,35 +121,46 @@ router.route('/email')
         if (req.body.ann === 'true') {
           ids = all_ids;
         }
-        for (var j = 0; j < ids.length; j++) {
-          var id = ids[j];
-          if (id in anon_to_email) {
-              var message_body = req.body.body;
-              var from = req.body.course + " Instructor" + " <" + gmailUsername +">";
-              if (req.body.from) {
-                from = "'" + req.body.from + "'" + " <" + gmailUsername +">";
-              }
-              if (anon_to_email[id].first) {
-                message_body = message_body.replace('[:firstname:]', anon_to_email[id].first);
-              }
-              else {
-                message_body = message_body.replace('[:firstname:]', '');
-              }
+        if (ids) {
+            for (var j = 0; j < ids.length; j++) {
+              var id = ids[j];
+              if (id in anon_to_email) {
+                  var message_body = req.body.body;
 
-              if (anon_to_email[id].first && anon_to_email[id].last) {
-                message_body = message_body.replace('[:fullname:]', anon_to_email[id].first + " " + anon_to_email[id].last);
+                  var source;
+                  if (masquerading) {
+                    source = req.body.reply;
+                  }
+                  else {
+                    source = emailUsername;
+                  }
+
+                  var from = req.body.course + " Instructor" + " <" + source +">";
+                  if (req.body.from) {
+                    from = "'" + req.body.from + "'" + " <" + source +">";
+                  }
+                  if (anon_to_email[id].first) {
+                    message_body = message_body.replace('[:firstname:]', anon_to_email[id].first);
+                  }
+                  else {
+                    message_body = message_body.replace('[:firstname:]', '');
+                  }
+
+                  if (anon_to_email[id].first && anon_to_email[id].last) {
+                    message_body = message_body.replace('[:fullname:]', anon_to_email[id].first + " " + anon_to_email[id].last);
+                  }
+                  else {
+                    message_body = message_body.replace('[:fullname:]', '');
+                  }
+                  // if (req.body.from === "") {
+                  //   message_body += "\n\nPlease do not repond to this email.";
+                  // }
+                  sendEmail(anon_to_email[id].email, from, req.body.subject, message_body, req.body.reply, myError);
               }
               else {
-                message_body = message_body.replace('[:fullname:]', '');
+                continue;
               }
-              if (req.body.from === "") {
-                message_body += "\n\nPlease do not repond to this email.";
-              }
-              sendEmail(anon_to_email[id].email, from, req.body.subject, message_body, req.body.reply, myError);
-          }
-          else {
-            continue;
-          }
+            }
         }
 
         res.send('sent');
@@ -220,7 +231,10 @@ router.route('/all').get(function(req, res) {
 router.route('/save').post(function(req, res) {
   var policy = new Policy();
   if (req.body.analytics === 'true') {
-    policy.ids = req.body.ids;
+    if (req.body.ids) {
+      policy.ids = req.body.ids;
+    }
+    console.log(policy.ids);
     policy.comp = req.body.comp;
     policy.attr = req.body.attr;
     policy.cert = req.body.cert;

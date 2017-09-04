@@ -10,7 +10,8 @@ url = "https://cahl.berkeley.edu:1337/api/email"
 headers = {'Content-Type': 'application/json', 'Accept':'application/json'}
 
 # Adding csv to mongo
-csvfile = open('test_pred.csv', 'r')
+# csvfile = open('test_pred.csv', 'r')
+csvfile = open('/deepedu/research/moocdrop/live-data/prediction.csv', 'r')
 reader = csv.DictReader(csvfile)
 mongo_client = MongoClient(host="localhost:1304", port=1304)
 db_pred = mongo_client.predictions
